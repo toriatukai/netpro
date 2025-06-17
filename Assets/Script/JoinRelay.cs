@@ -11,6 +11,13 @@ public class JoinRelayClient : MonoBehaviour
     {
         try
         {
+
+            if (string.IsNullOrEmpty(joinCode))
+            {
+                Debug.LogError("Join code is empty.");
+                return;
+            }
+
             // Relay Ç©ÇÁ Allocation èÓïÒÇéÊìæÅiJoinÅj
             var joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
             Debug.Log("Joined Relay with code: " + joinCode);
