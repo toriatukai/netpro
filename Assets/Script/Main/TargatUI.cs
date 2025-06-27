@@ -26,7 +26,6 @@ public class TargetUI : MonoBehaviour
         if (!IsFake)
         {
             // 命中時の処理：削除、アニメ、スコア通知など
-            Debug.Log("HIIIIIIIIIIIIIT");
         }
         Destroy(gameObject);
     }
