@@ -12,10 +12,12 @@ public class TargetSpawner : NetworkBehaviour
     {
         if (IsHost && Input.GetKeyDown(KeyCode.Space))
         {
+            Debug.Log("osita");
             SpawnTargetWithRatio();
         }
     }
 
+    //的を表示表示させるメソッド
     private void SpawnTargetWithRatio()
     {
         float xRate = Random.Range(0f, 1f);
@@ -43,6 +45,11 @@ public class TargetSpawner : NetworkBehaviour
         // 指定された比率からワールド座標へ変換
         float x = camCenter.x - areaWidth / 2f + areaWidth * xRate;
         float y = camCenter.y - areaHeight / 2f + areaHeight * yRate;
+
+        x = camCenter.x - areaWidth / 2f;
+        y = camCenter.y - areaHeight / 2f;
+
+        Debug.Log(x + ", " + y);
 
         return new Vector3(x, y, 0f);
     }
