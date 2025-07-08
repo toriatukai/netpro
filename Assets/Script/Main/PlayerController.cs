@@ -1,0 +1,77 @@
+using UnityEngine;
+
+public class PlayerController : MonoBehaviour
+{
+    [SerializeField] private Collider2D _crosshair; // マウスカーソルに追従するオブジェクト座標
+    [SerializeField] private int _maxBullets = 5;      // 1ラウンドあたりの最大発射数
+    private int _bulletsLeft;
+
+    void Start()
+    {
+        // 最大数にする(ラウンド開始時にも行う)
+        _bulletsLeft = _maxBullets;
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        MouseFollow();
+
+        // TODO: ラウンド中のみ打てるように変更する
+        if (Input.GetMouseButtonDown(0) && _bulletsLeft > 0)
+        {
+            Shoot();
+        }
+    }
+
+    public void MouseFollow()
+    {
+        //マウス位置に追従
+        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        mousePos.z = 0f;
+        transform.position = mousePos;
+    }
+
+    public void Shoot()
+    {
+        // 自分のCollider2Dと接触しているCollider2Dを取得
+        Collider2D[] hits = new Collider2D[10];
+        ContactFilter2D filter = new ContactFilter2D();
+
+        int hitCount = _crosshair.Overlap(filter, hits);
+        bool hitObject = false;
+
+        for (int i = 0; i < hitCount; i++)
+        {
+            Collider2D hitCollider = hits[i];
+            if (hitCollider == null) continue;
+
+            if (hitCollider.CompareTag("Target"))
+            {
+                Debug.Log("Hit target: " + hitCollider.name);
+                hitObject = true;
+
+                // 命中時の処理
+                Destroy(hitCollider.gameObject);
+                break;
+            }
+            else if (hitCollider.CompareTag("Decoy"))
+            {
+                Debug.Log("Hit Decoy: " + hitCollider.name);
+                hitObject = true;
+
+                // 命中時の処理
+                Destroy(hitCollider.gameObject);
+            }
+            else if (hitCollider.CompareTag("Area"))
+            {
+                hitObject = true;
+            }
+        }
+
+        if (!hitObject)
+        {
+            _bulletsLeft--;
+        }
+    }
+}

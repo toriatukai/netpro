@@ -17,16 +17,4 @@ public class SceneController : MonoBehaviour
             Debug.LogWarning("ネットワークに接続していません");
         }
     }
-
-    public void LoadMainTestScene()
-    {
-        if (NetworkManager.Singleton.IsHost || NetworkManager.Singleton.IsClient)
-        {
-            NetworkManager.Singleton.SceneManager.LoadScene("MainTestScene", LoadSceneMode.Single);
-        }
-        else
-        {
-            Debug.LogWarning("ネットワークに接続していません");
-        }
-    }
 }
