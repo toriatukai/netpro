@@ -1,5 +1,6 @@
 using UnityEngine;
 using Unity.Netcode;
+using Cysharp.Threading.Tasks;
 
 public class TargetSpawner : NetworkBehaviour
 {
@@ -8,73 +9,77 @@ public class TargetSpawner : NetworkBehaviour
     [Range(0.1f, 1f)] public float widthRate = 0.5f;
     [Range(0.1f, 1f)] public float heightRate = 0.5f;
 
+    // 表示する秒数の最短、最長時間
+    [SerializeField] private float _minDelay = 2f;
+    [SerializeField] private float _maxDelay = 5f;
+
+    //private bool _isSpawning = false;
+
     private void Update()
     {
         if (IsHost && Input.GetKeyDown(KeyCode.Space))
         {
-            SpawnTargetWithRatio();
+            SpwanAsync().Forget();
+        }
+
+        if (Input.GetKeyDown(KeyCode.L))
+        {
+            SpwanAsync().Forget();
         }
     }
 
-    //的を表示表示させるメソッド
+    private async UniTask SpwanAsync()
+    {
+        float delay = Random.Range(_minDelay, _maxDelay);
+        Debug.Log("ターゲット出現待機中: " + delay);
+        await UniTask.Delay(System.TimeSpan.FromSeconds(delay));
+
+        SpawnTargetWithRatio();
+    }
+
     private void SpawnTargetWithRatio()
     {
-        // 乱数
+        // 乱数で比率を決定
         float xRate = Random.Range(0f, 1f);
         float yRate = Random.Range(0f, 1f);
 
-        // カメラの中心とサイズ取得
-        Vector3 camCenter = Camera.main.transform.position;
-        float camHeight = Camera.main.orthographicSize * 2f;
-        float camWidth = camHeight * Camera.main.aspect;
-
-        // 出現エリアの幅を制限
-        float areaWidth = camWidth * widthRate;
-        float areaHeight = camHeight * heightRate;
-
-        // 出現エリアの左隅
-        float originalX = camCenter.x - areaWidth / 2f;
-        float originalY = camCenter.y - areaHeight / 2f;
-
-        // 出現エリアの範囲から座標を算出
-        float x = originalX + areaWidth * xRate;
-        float y = originalY + areaHeight * yRate;
-
-        Vector3 spawnPos = new Vector3(x, y, 0f);
-
-        // ターゲットを表示(ホスト側)
+        // ホスト自身にターゲットを生成
+        Vector3 spawnPos = GetSpawnPositionFromRate(xRate, yRate);
         Instantiate(_targetPrefab, spawnPos, Quaternion.identity);
 
-        // クライアント側に座標を送信
-        SendSpawnDataClientRpc(originalX, originalY, x, y);
+        // クライアントに比率を送信
+        SendSpawnDataClientRpc(xRate, yRate);
     }
 
     [ClientRpc]
-    private void SendSpawnDataClientRpc(float hostX, float hostY, float x, float y)
+    private void SendSpawnDataClientRpc(float xRate, float yRate)
     {
         if (IsHost) return;
 
-        // カメラの中心とサイズ取得
+        Vector3 spawnPos = GetSpawnPositionFromRate(xRate, yRate);
+        Instantiate(_targetPrefab, spawnPos, Quaternion.identity);
+    }
+
+    // 各クライアントが自分のカメラサイズに基づいて出現位置を計算する
+    private Vector3 GetSpawnPositionFromRate(float xRate, float yRate)
+    {
+        //カメラの中心とサイズ取得
         Vector3 camCenter = Camera.main.transform.position;
         float camHeight = Camera.main.orthographicSize * 2f;
         float camWidth = camHeight * Camera.main.aspect;
 
-        // 出現エリアの幅を制限
+        //出現エリアの幅を制限
         float areaWidth = camWidth * widthRate;
         float areaHeight = camHeight * heightRate;
 
-        float originalX = camCenter.x - areaWidth / 2f;
-        float originalY = camCenter.y - areaHeight / 2f;
+        //出現エリアの左隅
+        float originX = camCenter.x - areaWidth / 2f;
+        float originY = camCenter.y - areaHeight / 2f;
 
-        float ratioX = x / hostX;
-        float ratioY = y / hostY;
+        //範囲から座標を算出
+        float x = originX + areaWidth * xRate;
+        float y = originY + areaHeight * yRate;
 
-        float targetX = originalX * ratioX;
-        float targetY = originalY * ratioY;
-
-        Vector3 spawnPos = new Vector3(targetX, targetY, 0f);
-
-        Instantiate(_targetPrefab, spawnPos, Quaternion.identity);
+        return new Vector3(x, y, 0f);
     }
-
 }

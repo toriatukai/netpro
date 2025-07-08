@@ -21,6 +21,7 @@ public class PlayerController : MonoBehaviour
         if (Input.GetMouseButtonDown(0) && _bulletsLeft > 0)
         {
             Shoot();
+            Debug.Log("c‚è’e”" + _bulletsLeft);
         }
     }
 
@@ -36,15 +37,18 @@ public class PlayerController : MonoBehaviour
     {
         // ©•ª‚ÌCollider2D‚ÆÚG‚µ‚Ä‚¢‚éCollider2D‚ğæ“¾
         Collider2D[] hits = new Collider2D[10];
-        ContactFilter2D filter = new ContactFilter2D();
+        ContactFilter2D filter = new ContactFilter2D { useTriggers = true };
 
         int hitCount = _crosshair.Overlap(filter, hits);
         bool hitObject = false;
-
         for (int i = 0; i < hitCount; i++)
         {
             Collider2D hitCollider = hits[i];
-            if (hitCollider == null) continue;
+            if (hitCollider == null)
+            {
+                Debug.Log("null");
+                continue;
+            }
 
             if (hitCollider.CompareTag("Target"))
             {
@@ -52,7 +56,7 @@ public class PlayerController : MonoBehaviour
                 hitObject = true;
 
                 // –½’†‚Ìˆ—
-                Destroy(hitCollider.gameObject);
+                hitCollider.GetComponent<Target>().OnHit();
                 break;
             }
             else if (hitCollider.CompareTag("Decoy"))
@@ -65,11 +69,12 @@ public class PlayerController : MonoBehaviour
             }
             else if (hitCollider.CompareTag("Area"))
             {
+                Debug.Log("Hit Area:" + hitCollider.name);
                 hitObject = true;
             }
         }
 
-        if (!hitObject)
+        if (hitObject)
         {
             _bulletsLeft--;
         }
