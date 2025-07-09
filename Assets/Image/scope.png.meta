@@ -5,6 +5,27 @@ TextureImporter:
   - first:
       213: -7948845680468396596
     second: scope_0
+  - first:
+      213: -244744652430832535
+    second: scope_1
+  - first:
+      213: 6128988604898368630
+    second: scope_2
+  - first:
+      213: 6588490113126993580
+    second: scope_3
+  - first:
+      213: -6610201098703971142
+    second: scope_4
+  - first:
+      213: 1807318589508048579
+    second: scope_5
+  - first:
+      213: -7802533014691035720
+    second: scope_6
+  - first:
+      213: 2860828222449237231
+    second: scope_7
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -103,10 +124,10 @@ TextureImporter:
       name: scope_0
       rect:
         serializedVersion: 2
-        x: 320
-        y: 120
-        width: 960
-        height: 960
+        x: 25
+        y: 107
+        width: 68
+        height: 68
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -117,6 +138,160 @@ TextureImporter:
       bones: []
       spriteID: cc57849e7f600b190800000000000000
       internalID: -7948845680468396596
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: scope_1
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 118
+        width: 8
+        height: 71
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 96c0f2b090e7a9cf0800000000000000
+      internalID: -244744652430832535
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: scope_2
+      rect:
+        serializedVersion: 2
+        x: 107
+        y: 107
+        width: 68
+        height: 68
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 67c5263d9aa8e0550800000000000000
+      internalID: 6128988604898368630
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: scope_3
+      rect:
+        serializedVersion: 2
+        x: 11
+        y: 96
+        width: 71
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cae8b1fb9d40f6b50800000000000000
+      internalID: 6588490113126993580
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: scope_4
+      rect:
+        serializedVersion: 2
+        x: 118
+        y: 96
+        width: 71
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: abc5ad18f19d344a0800000000000000
+      internalID: -6610201098703971142
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: scope_5
+      rect:
+        serializedVersion: 2
+        x: 25
+        y: 25
+        width: 68
+        height: 68
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3c6569b7ea2e41910800000000000000
+      internalID: 1807318589508048579
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: scope_6
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 11
+        width: 8
+        height: 71
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8b5451f0095d7b390800000000000000
+      internalID: -7802533014691035720
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: scope_7
+      rect:
+        serializedVersion: 2
+        x: 107
+        y: 25
+        width: 68
+        height: 68
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fecbf7a6c14b3b720800000000000000
+      internalID: 2860828222449237231
       vertices: []
       indices: 
       edges: []
@@ -136,6 +311,13 @@ TextureImporter:
       entries: []
     nameFileIdTable:
       scope_0: -7948845680468396596
+      scope_1: -244744652430832535
+      scope_2: 6128988604898368630
+      scope_3: 6588490113126993580
+      scope_4: -6610201098703971142
+      scope_5: 1807318589508048579
+      scope_6: -7802533014691035720
+      scope_7: 2860828222449237231
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
