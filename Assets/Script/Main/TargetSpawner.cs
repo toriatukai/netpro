@@ -13,22 +13,7 @@ public class TargetSpawner : NetworkBehaviour
     [SerializeField] private float _minDelay = 2f;
     [SerializeField] private float _maxDelay = 5f;
 
-    //private bool _isSpawning = false;
-
-    private void Update()
-    {
-        if (IsHost && Input.GetKeyDown(KeyCode.Space))
-        {
-            SpwanAsync().Forget();
-        }
-
-        if (Input.GetKeyDown(KeyCode.L))
-        {
-            SpwanAsync().Forget();
-        }
-    }
-
-    private async UniTask SpwanAsync()
+    public async UniTask SpawnAsync()
     {
         float delay = Random.Range(_minDelay, _maxDelay);
         Debug.Log("ターゲット出現待機中: " + delay);

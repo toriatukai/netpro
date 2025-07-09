@@ -460,6 +460,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 908ad2a4a4641e64e9332a0936b6f307, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   _crosshair: {fileID: 801726723}
   _maxBullets: 50
 --- !u!58 &801726723
@@ -1278,6 +1279,7 @@ GameObject:
   - component: {fileID: 2033619607}
   - component: {fileID: 2033619609}
   - component: {fileID: 2033619610}
+  - component: {fileID: 2033619611}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -1372,6 +1374,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _hostTimeList: []
   _clientTimeList: []
+--- !u!114 &2033619611
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2033619605}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d57b910ba7111aa4aa888511140b4d04, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  _targetSpawner: {fileID: 2033619607}
+  _totalRounds: 3
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
