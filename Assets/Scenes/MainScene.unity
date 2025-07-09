@@ -1277,6 +1277,7 @@ GameObject:
   - component: {fileID: 2033619606}
   - component: {fileID: 2033619607}
   - component: {fileID: 2033619609}
+  - component: {fileID: 2033619610}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -1357,6 +1358,20 @@ MonoBehaviour:
   widthRate: 0.8
   heightRate: 0.55
   areaSprite: {fileID: 1303751324}
+--- !u!114 &2033619610
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2033619605}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f063f64a22c427468dccfce0cef8e42, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _hostTimeList: []
+  _clientTimeList: []
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

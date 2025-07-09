@@ -1,10 +1,11 @@
 using UnityEngine;
+using Unity.Netcode;
 
 public class PlayerController : MonoBehaviour
 {
-    [SerializeField] private Collider2D _crosshair; // マウスカーソルに追従するオブジェクト座標
-    [SerializeField] private int _maxBullets = 5;      // 1ラウンドあたりの最大発射数
-    private int _bulletsLeft;
+    [SerializeField] private Collider2D _crosshair;     // マウスカーソルに追従するオブジェクト座標
+    [SerializeField] private int _maxBullets = 5;       // 1ラウンドあたりの最大発射数
+    private int _bulletsLeft;   // 残弾数
 
     void Start()
     {
@@ -77,6 +78,13 @@ public class PlayerController : MonoBehaviour
         if (hitObject)
         {
             _bulletsLeft--;
+            if(_bulletsLeft <= 0)
+            {
+                // 残弾数が0になったらタイム送信
+                ulong clientId = NetworkManager.Singleton.LocalClientId;
+                ScoreManager.Instance.SetHitTimeList(clientId, 0.0f);
+
+            }
         }
     }
 }

@@ -1,3 +1,4 @@
+using Unity.Netcode;
 using UnityEngine;
 
 public class Target : MonoBehaviour
@@ -14,7 +15,10 @@ public class Target : MonoBehaviour
         float elapsedTime = Time.time - _spawnTime;
         Debug.Log($"Hit! Time to hit: {elapsedTime:F2} seconds");
 
-        // 必要に応じてここで記録保存・スコア送信など
+        // 命中時間をスコアマネージャーに保存
+        ulong clientId = NetworkManager.Singleton.LocalClientId;
+        ScoreManager.Instance.SetHitTimeList(clientId, elapsedTime);
+
         Destroy(gameObject);
     }
 }
