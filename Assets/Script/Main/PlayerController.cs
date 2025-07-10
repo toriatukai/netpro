@@ -25,6 +25,14 @@ public class PlayerController : NetworkBehaviour
     {
 
         MouseFollow();
+        Debug.Log("残り弾数" + _bulletsLeft);
+
+        // GameManager.Instance が null の間は、その後の処理をスキップする
+        // これにより、GameManager が完全に初期化され、スポーンされるのを待つ
+        if (GameManager.Instance == null)
+        {
+            return;
+        }
 
         if (!GameManager.Instance.IsPlaying()) return;
 

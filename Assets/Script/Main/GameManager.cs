@@ -28,8 +28,11 @@ public class GameManager : NetworkBehaviour
     {
         // Singletonとして存在させる
         if (Instance != null && Instance != this) Destroy(gameObject);
-        Instance = this;
-        DontDestroyOnLoad(gameObject);
+        else
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
     }
 
     // ステートを返すプロパティ
@@ -39,18 +42,16 @@ public class GameManager : NetworkBehaviour
 
     void Update()
     {
-        if (!IsSpawned) return;
         // TODO: ボタンを押したらラウンド開始にするようにする
         if (NetworkManager.Singleton.IsHost && Input.GetKeyDown(KeyCode.Space))
         {
+
             StartRound();
         }
     }
 
     public void StartRound()
     {
-        if (!IsSpawned) return;
-
         _currentRound++;
         _finishedPlayerCount = 0;
         _state.Value = GameState.Playing;
@@ -69,6 +70,7 @@ public class GameManager : NetworkBehaviour
     {
         _finishedPlayerCount++;
         int playerCount = NetworkManager.Singleton.ConnectedClientsList.Count;
+        Debug.Log("終わったプレイヤー" + _finishedPlayerCount);
         if (_finishedPlayerCount >= playerCount) // 1 vs 1 想定
         {
             EndRound().Forget();
