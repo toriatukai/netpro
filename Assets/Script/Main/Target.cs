@@ -19,7 +19,7 @@ public class Target : MonoBehaviour
         ulong clientId = NetworkManager.Singleton.LocalClientId;
         ScoreManager.Instance.SetHitTimeList(clientId, elapsedTime);
 
-        GameManager.Instance.NotifyPlayerFinished();
+        //GameManager.Instance.NotifyPlayerFinished();
 
         Destroy(gameObject);
     }

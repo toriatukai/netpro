@@ -1,6 +1,7 @@
 using UnityEngine;
 using Unity.Netcode;
 
+/*
 public class PlayerController : NetworkBehaviour
 {
     [SerializeField] private Collider2D _crosshair;     // マウスカーソルに追従するオブジェクト座標
@@ -103,5 +104,76 @@ public class PlayerController : NetworkBehaviour
 
             }
         }
+    }
+}*/
+
+public class PlayerController : NetworkBehaviour
+{
+    [SerializeField] private CrosshairController crosshairController;
+
+    private bool canShoot = false;
+
+    public override void OnNetworkSpawn()
+    {
+        if (IsOwner)
+        {
+            canShoot = true;
+        }
+    }
+
+    private void Update()
+    {
+        if (!IsOwner) return;
+
+        crosshairController.MouseFollow();
+
+        if (canShoot && Input.GetMouseButtonDown(0))
+        {
+            TryShoot();
+        }
+    }
+
+    private void TryShoot()
+    {
+        if (crosshairController.HasAlreadyHit)
+        {
+            Debug.Log("もう命中済み");
+            return;
+        }
+
+        if (crosshairController.RemainingBullets <= 0)
+        {
+            Debug.Log("弾切れ");
+            SendReactionTime(-1f);
+            canShoot = false;
+            return;
+        }
+
+        bool hitTarget = crosshairController.CheckHit();
+
+        crosshairController.RemainingBullets--;
+
+        if (hitTarget)
+        {
+            float reactionTime = Time.time - GameManager.Instance.TargetDisplayTime;
+            SendReactionTime(reactionTime);
+            canShoot = false;
+        }
+        else
+        {
+            Debug.Log("外した");
+            // 弾は減るが反応時間は送らない（撃ち切りになるまで）
+        }
+    }
+
+    private void SendReactionTime(float time)
+    {
+        SubmitReactionTimeServerRpc(OwnerClientId, time);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void SubmitReactionTimeServerRpc(ulong clientId, float reactionTime)
+    {
+        GameManager.Instance.SubmitReactionTimeServerRpc(clientId, reactionTime);
     }
 }
