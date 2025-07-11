@@ -8,7 +8,7 @@ public class SceneController : MonoBehaviour
     // シーン遷移メソッド統括管理したい(覚えていたら)
     public void LoadMainScene()
     {
-        if (NetworkManager.Singleton.IsHost || NetworkManager.Singleton.IsClient)
+        if (NetworkManager.Singleton.IsHost)
         {
             NetworkManager.Singleton.SceneManager.LoadScene("MainScene", LoadSceneMode.Single);
         }

@@ -1,82 +1,112 @@
 using UnityEngine;
+using Unity.Netcode;
 
-public class PlayerController : MonoBehaviour
+public class PlayerController : NetworkBehaviour
 {
-    [SerializeField] private Collider2D _crosshair; // マウスカーソルに追従するオブジェクト座標
-    [SerializeField] private int _maxBullets = 5;      // 1ラウンドあたりの最大発射数
-    private int _bulletsLeft;
+    [SerializeField] private CrosshairController crosshairController;
 
-    void Start()
+    private bool canShoot = false;
+
+
+    public override void OnNetworkSpawn()
     {
-        // 最大数にする(ラウンド開始時にも行う)
-        _bulletsLeft = _maxBullets;
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        MouseFollow();
-
-        // TODO: ラウンド中のみ打てるように変更する
-        if (Input.GetMouseButtonDown(0) && _bulletsLeft > 0)
+        if (IsOwner)
         {
-            Shoot();
-            Debug.Log("残り弾数" + _bulletsLeft);
+            canShoot = true;
+            LocalInstance = this;
         }
     }
 
-    public void MouseFollow()
+    private void Update()
     {
-        //マウス位置に追従
-        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        mousePos.z = 0f;
-        transform.position = mousePos;
-    }
+        crosshairController.MouseFollow();
 
-    public void Shoot()
-    {
-        // 自分のCollider2Dと接触しているCollider2Dを取得
-        Collider2D[] hits = new Collider2D[10];
-        ContactFilter2D filter = new ContactFilter2D { useTriggers = true };
+        if (!IsOwner) return;
 
-        int hitCount = _crosshair.Overlap(filter, hits);
-        bool hitObject = false;
-        for (int i = 0; i < hitCount; i++)
+        if (IsServer && Input.GetKeyDown(KeyCode.Space))
         {
-            Collider2D hitCollider = hits[i];
-            if (hitCollider == null)
+            if (GameManager.Instance.CurrentState == GameManager.GameState.Connecting)
             {
-                Debug.Log("null");
-                continue;
-            }
-
-            if (hitCollider.CompareTag("Target"))
-            {
-                Debug.Log("Hit target: " + hitCollider.name);
-                hitObject = true;
-
-                // 命中時の処理
-                hitCollider.GetComponent<Target>().OnHit();
-                break;
-            }
-            else if (hitCollider.CompareTag("Decoy"))
-            {
-                Debug.Log("Hit Decoy: " + hitCollider.name);
-                hitObject = true;
-
-                // 命中時の処理
-                Destroy(hitCollider.gameObject);
-            }
-            else if (hitCollider.CompareTag("Area"))
-            {
-                Debug.Log("Hit Area:" + hitCollider.name);
-                hitObject = true;
+                GameManager.Instance.StartGame();
             }
         }
-
-        if (hitObject)
+        /*if(GameManager.Instance != null)
         {
-            _bulletsLeft--;
+            Debug.Log("GameManagerInstance: " + GameManager.Instance + ",  GameManager.Instance.CurrentState: " + GameManager.Instance.CurrentState);
+        }*/
+
+        if (GameManager.Instance == null || GameManager.Instance.CurrentState != GameManager.GameState.Playing)
+        {
+            return;
+        }
+
+        if (Input.GetMouseButtonDown(0) && canShoot)
+        {
+            TryShoot();
+        }
+        else
+        {
+            Debug.Log("canShoot: " + canShoot);
+        }
+    }
+
+    private void TryShoot()
+    {
+        if (crosshairController.HasAlreadyHit)
+        {
+            Debug.Log("もう命中済み");
+            return;
+        }
+
+        if (crosshairController.RemainingBullets <= 0)
+        {
+            Debug.Log("弾切れ");
+            SendReactionTime(-1f);
+            canShoot = false;
+            return;
+        }
+
+        bool hitTarget = crosshairController.CheckHit();
+
+        crosshairController.RemainingBullets--;
+
+        if (hitTarget)
+        {
+            Debug.Log("Time.time: " + Time.time + ", GameManager.Instance.TargetDisplayTime: " + GameManager.Instance.TargetDisplayTime);
+            float reactionTime = Time.time - GameManager.Instance.TargetDisplayTime;
+
+            SendReactionTime(reactionTime);
+            canShoot = false;
+        }
+        else
+        {
+            Debug.Log("外した");
+            // 弾は減るが反応時間は送らない（撃ち切りになるまで）
+        }
+    }
+
+    private void SendReactionTime(float time)
+    {
+        SubmitReactionTimeServerRpc(OwnerClientId, time);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void SubmitReactionTimeServerRpc(ulong clientId, float reactionTime)
+    {
+        GameManager.Instance.SubmitReactionTimeServerRpc(clientId, reactionTime);
+    }
+
+    public static PlayerController LocalInstance { get; private set; }
+    public CrosshairController Crosshair => crosshairController;
+
+    public void ResetClientRound()
+    {
+        Debug.Log("クライアント側のプレイヤーがラウンドをリセット");
+        if (crosshairController != null)
+        {
+            canShoot = true;
+            crosshairController.HasAlreadyHit = false;
+            crosshairController.RemainingBullets = 5;
         }
     }
 }
