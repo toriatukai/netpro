@@ -19,7 +19,9 @@ public class GameManager : NetworkBehaviour
 
     public static GameManager Instance { get; private set; }
 
-    public GameState CurrentState { get; private set; } = GameState.Connecting;
+    private NetworkVariable<GameState> currentState = new NetworkVariable<GameState>(GameState.Connecting, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+    public GameState CurrentState => currentState.Value;
 
     private Dictionary<ulong, PlayerRoundData> playerDataDict = new();
     private int currentRound = 0;
@@ -27,8 +29,8 @@ public class GameManager : NetworkBehaviour
 
     [SerializeField] private GameObject targetPrefab;
 
-    private float targetDisplayTime;
-    public float TargetDisplayTime => targetDisplayTime;
+    private NetworkVariable<float> targetDisplayTime = new(writePerm: NetworkVariableWritePermission.Server);
+    public float TargetDisplayTime => targetDisplayTime.Value;
 
     private float minDelay = 2f;
     private float maxDelay = 8f;
@@ -82,7 +84,7 @@ public class GameManager : NetworkBehaviour
     }
     public void SetGameState(GameState newState)
     {
-        CurrentState = newState;
+        currentState.Value = newState;
         Debug.Log($"GameState changed to: {newState}");
     }
 
@@ -104,9 +106,24 @@ public class GameManager : NetworkBehaviour
         {
             p.ResetRound();
         }
+
+        ResetClientStateClientRpc();
+
         roundInProgress = true;
 
         SpawnTargetAsync().Forget();
+    }
+
+    [ClientRpc]
+    private void ResetClientStateClientRpc()
+    {
+        Debug.Log("クライアント側でリセット処理実行");
+
+        // 例: クロスヘアの弾数・命中フラグをリセット（オーナーだけ）
+        if (PlayerController.LocalInstance != null)
+        {
+            PlayerController.LocalInstance.ResetClientRound();
+        }
     }
 
     private async UniTask SpawnTargetAsync()
@@ -123,7 +140,7 @@ public class GameManager : NetworkBehaviour
 
         Debug.Log($"ターゲット出現座標比率 x:{xRate:F2} y:{yRate:F2}");
 
-        targetDisplayTime = Time.time;
+        targetDisplayTime.Value = Time.time;
 
         // 全クライアントに的出現通知
         SendSpawnTargetClientRpc(xRate, yRate);
@@ -182,6 +199,7 @@ public class GameManager : NetworkBehaviour
         Debug.Log($"ラウンド{currentRound}結果 判定中...");
 
         int result = CompareTimes(timeA, timeB);
+        Debug.Log("Player0: " + timeA + ", Player1: " + timeB + ", result: " + result);
         if (result == 0)
             Debug.Log("ラウンド引き分け");
         else if (result == 1)

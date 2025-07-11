@@ -4,7 +4,7 @@ public class CrosshairController : MonoBehaviour
 {
     [SerializeField] private Collider2D crosshairCollider;
 
-    public bool HasAlreadyHit { get; private set; } = false;
+    public bool HasAlreadyHit { get; set; } = false;
     public int RemainingBullets { get; set; } = 5;
 
     private void Start()
@@ -22,13 +22,16 @@ public class CrosshairController : MonoBehaviour
 
     public bool CheckHit()
     {
-        Collider2D[] results = new Collider2D[5];
-        ContactFilter2D filter = new ContactFilter2D();
-        int count = crosshairCollider.Overlap(filter, results);
+        Collider2D[] hits = new Collider2D[5];
+        ContactFilter2D filter = new ContactFilter2D { useTriggers = true };
+        int count = crosshairCollider.Overlap(filter, hits);
+
 
         for (int i = 0; i < count; i++)
         {
-            var hitCollider = results[i];
+
+            var hitCollider = hits[i];
+            Debug.Log("ヒットしたオブジェクトのタグ: " + hitCollider.tag);
 
             if (hitCollider.CompareTag("Target"))
             {
