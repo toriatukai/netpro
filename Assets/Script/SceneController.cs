@@ -17,4 +17,17 @@ public class SceneController : MonoBehaviour
             Debug.LogWarning("ネットワークに接続していません");
         }
     }
+
+    //テスト用　キャラクター選択画面への遷移メソッド
+    public void LoadCharactarSelectScene()
+    {
+        if (NetworkManager.Singleton.IsHost || NetworkManager.Singleton.IsClient)
+        {
+            NetworkManager.Singleton.SceneManager.LoadScene("CharactarChoiceScene", LoadSceneMode.Single);
+        }
+        else
+        {
+            Debug.LogWarning("ネットワークに接続していません");
+        }
+    }
 }
