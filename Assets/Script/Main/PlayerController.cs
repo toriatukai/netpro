@@ -123,11 +123,22 @@ public class PlayerController : NetworkBehaviour
 
     private void Update()
     {
-        if (!IsOwner) return;
-
         crosshairController.MouseFollow();
 
-        if (canShoot && Input.GetMouseButtonDown(0))
+        if (!IsOwner) return;
+
+        if (IsServer && Input.GetKeyDown(KeyCode.Space))
+        {
+            if (GameManager.Instance.CurrentState == GameManager.GameState.Connecting)
+            {
+                GameManager.Instance.StartGame();
+            }
+        }
+
+        if (GameManager.Instance == null || GameManager.Instance.CurrentState != GameManager.GameState.Playing)
+            return;
+
+        if (Input.GetMouseButtonDown(0))
         {
             TryShoot();
         }

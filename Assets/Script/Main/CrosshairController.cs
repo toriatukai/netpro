@@ -39,14 +39,14 @@ public class CrosshairController : MonoBehaviour
             else if (hitCollider.CompareTag("Decoy"))
             {
                 Destroy(hitCollider.gameObject);
-                return false; // �f�R�C�͖����Ƃ��Ȃ����e�͌���
+                return false;
             }
             else if (hitCollider.CompareTag("Area"))
             {
-                return false; // �͈͓����������ł͂Ȃ�
+                return false;
             }
         }
 
-        return false; // �͈͊O�i�^�O�Ȃ��j�ł̃N���b�N�͒e�����炳�Ȃ�
+        return false;
     }
 }
