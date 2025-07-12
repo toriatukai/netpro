@@ -25,7 +25,7 @@ public class GameManager : NetworkBehaviour
 
     private Dictionary<ulong, PlayerRoundData> playerDataDict = new();
     private int currentRound = 0;
-    private bool roundInProgress = false;
+    //private bool roundInProgress = false;
 
     [SerializeField] private GameObject targetPrefab;
 
@@ -80,6 +80,7 @@ public class GameManager : NetworkBehaviour
         await UniTask.Delay(2000); // カウントダウン演出（任意）
 
         SetGameState(GameState.Playing); // ここで撃てるようになる
+
         StartNextRound();
     }
     public void SetGameState(GameState newState)
@@ -91,6 +92,7 @@ public class GameManager : NetworkBehaviour
 
     private void StartNextRound()
     {
+        GameUIManager.Instance.ResetReactionTime(); // テキストのリセット
         if (!IsServer) return;
 
         if (currentRound >= 3)
@@ -109,7 +111,7 @@ public class GameManager : NetworkBehaviour
 
         ResetClientStateClientRpc();
 
-        roundInProgress = true;
+        UpdateRoundTextClientRpc(currentRound);
 
         SpawnTargetAsync().Forget();
     }
@@ -124,6 +126,12 @@ public class GameManager : NetworkBehaviour
         {
             PlayerController.LocalInstance.ResetClientRound();
         }
+    }
+
+    [ClientRpc]
+    private void UpdateRoundTextClientRpc(int round)
+    {
+        GameUIManager.Instance.UpdateRoundText(round);
     }
 
     private async UniTask SpawnTargetAsync()
@@ -187,9 +195,11 @@ public class GameManager : NetworkBehaviour
 
     private void EvaluateRoundResult()
     {
-        roundInProgress = false;
+        //roundInProgress = false;
 
         SetGameState(GameState.RoundEnd); // ラウンド終了
+
+        ClearTargetClientRpc(); // 的の削除
 
         var players = playerDataDict.Values.ToList();
 
@@ -219,8 +229,15 @@ public class GameManager : NetworkBehaviour
         {
             await UniTask.Delay(2000);
             SetGameState(GameState.Playing);
+            
             StartNextRound();
         });
+    }
+
+    [ClientRpc]
+    private void ClearTargetClientRpc()
+    {
+        TargetSpawner.Instance.ClearAllTargets();
     }
 
 

@@ -58,31 +58,35 @@ public class PlayerController : NetworkBehaviour
             return;
         }
 
-        if (crosshairController.RemainingBullets <= 0)
-        {
-            Debug.Log("弾切れ");
-            SendReactionTime(-1f);
-            canShoot = false;
-            return;
-        }
-
         bool hitTarget = crosshairController.CheckHit();
 
         crosshairController.RemainingBullets--;
 
-        if (hitTarget)
+        if (crosshairController.RemainingBullets <= 0)
         {
-            Debug.Log("Time.time: " + Time.time + ", GameManager.Instance.TargetDisplayTime: " + GameManager.Instance.TargetDisplayTime);
-            float reactionTime = Time.time - GameManager.Instance.TargetDisplayTime;
-
-            SendReactionTime(reactionTime);
+            Debug.Log("撃ち切りで外した");
+            GameUIManager.Instance.SetReactionTime(-1f); // テキストの配置
+            SendReactionTime(-1f);
             canShoot = false;
         }
         else
         {
-            Debug.Log("外した");
+            Debug.Log("外した、残り弾数: " + crosshairController.RemainingBullets);
             // 弾は減るが反応時間は送らない（撃ち切りになるまで）
         }
+    }
+
+    public void OnTargetHit(float reactionTime)
+    {
+        if (crosshairController.HasAlreadyHit) return;
+
+        crosshairController.HasAlreadyHit = true;
+        canShoot = false;
+
+        GameUIManager.Instance.SetReactionTime(reactionTime);
+
+        SendReactionTime(reactionTime);
+
     }
 
     private void SendReactionTime(float time)
