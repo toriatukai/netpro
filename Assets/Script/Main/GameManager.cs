@@ -28,6 +28,7 @@ public class GameManager : NetworkBehaviour
     //private bool roundInProgress = false;
 
     [SerializeField] private GameObject targetPrefab;
+    [SerializeField] private int maxBullets = 5;
 
     private NetworkVariable<float> targetDisplayTime = new(writePerm: NetworkVariableWritePermission.Server);
     public float TargetDisplayTime => targetDisplayTime.Value;
@@ -92,7 +93,7 @@ public class GameManager : NetworkBehaviour
 
     private void StartNextRound()
     {
-        GameUIManager.Instance.ResetReactionTime(); // テキストのリセット
+        //GameUIManager.Instance.ResetReactionTime(); // テキストのリセット
         if (!IsServer) return;
 
         if (currentRound >= 3)
@@ -106,12 +107,12 @@ public class GameManager : NetworkBehaviour
 
         foreach (var p in playerDataDict.Values)
         {
-            p.ResetRound();
+            p.ResetRound(maxBullets);
         }
 
         ResetClientStateClientRpc();
 
-        UpdateRoundTextClientRpc(currentRound);
+        UpdateRoundClientRpc(currentRound);
 
         SpawnTargetAsync().Forget();
     }
@@ -129,9 +130,11 @@ public class GameManager : NetworkBehaviour
     }
 
     [ClientRpc]
-    private void UpdateRoundTextClientRpc(int round)
+    private void UpdateRoundClientRpc(int round)
     {
         GameUIManager.Instance.UpdateRoundText(round);
+        GameUIManager.Instance.ResetReactionTime();
+        GameUIManager.Instance.UpdateBulletsText(maxBullets);
     }
 
     private async UniTask SpawnTargetAsync()
@@ -284,6 +287,7 @@ public class GameManager : NetworkBehaviour
 
 public class PlayerRoundData
 {
+    
     public ulong ClientId;
     public List<float> ReactionTimes = new();
     public int WinCount = 0;
@@ -295,9 +299,9 @@ public class PlayerRoundData
         ClientId = clientId;
     }
 
-    public void ResetRound()
+    public void ResetRound(int maxBullets)
     {
-        RemainingBullets = 5;
+        RemainingBullets = maxBullets;
         HasFinishedThisRound = false;
     }
 }

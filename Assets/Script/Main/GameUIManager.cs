@@ -5,6 +5,7 @@ public class GameUIManager : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI roundText;
     [SerializeField] private TextMeshProUGUI reactionTimeText;
+    [SerializeField] private TextMeshProUGUI bulletsText;
 
     public static GameUIManager Instance { get; private set; }
 
@@ -25,6 +26,11 @@ public class GameUIManager : MonoBehaviour
         roundText.text = $"Round {round}";
     }
 
+    public void UpdateBulletsText(int num)
+    {
+        bulletsText.text = $"Bullets: {num}";
+    }
+
 
     public void SetReactionTime(float time)
     {
@@ -42,4 +48,5 @@ public class GameUIManager : MonoBehaviour
     {
         reactionTimeText.text = "Time: 00.00sec";
     }
+
 }

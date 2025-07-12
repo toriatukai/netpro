@@ -61,8 +61,9 @@ public class PlayerController : NetworkBehaviour
         bool hitTarget = crosshairController.CheckHit();
 
         crosshairController.RemainingBullets--;
+        GameUIManager.Instance.UpdateBulletsText(crosshairController.RemainingBullets);
 
-        if (crosshairController.RemainingBullets <= 0)
+        if (crosshairController.RemainingBullets <= 0 && !crosshairController.HasAlreadyHit)
         {
             Debug.Log("撃ち切りで外した");
             GameUIManager.Instance.SetReactionTime(-1f); // テキストの配置
@@ -105,7 +106,8 @@ public class PlayerController : NetworkBehaviour
 
     public void ResetClientRound()
     {
-        Debug.Log("クライアント側のプレイヤーがラウンドをリセット");
+        //GameUIManager.Instance.ResetReactionTime();
+        
         if (crosshairController != null)
         {
             canShoot = true;
