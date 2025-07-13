@@ -1,30 +1,41 @@
 using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
 
-public class ImageChange : MonoBehaviour
+public class SkillSelector : MonoBehaviour
 {
-
-    public GameObject[] imageArray;
+    public GameObject[] skillSetArray; // ← Image + Text を含んだ親オブジェクト
     private int count;
-    public GameObject imageObj;
 
     void Start()
     {
         count = 0;
-        imageObj = GameObject.Instantiate(imageArray[count]) as GameObject;
+
+        // 全て非表示
+        foreach (var obj in skillSetArray)
+        {
+            obj.SetActive(false);
+        }
+
+        // 最初だけ表示
+        skillSetArray[count].SetActive(true);
     }
 
-    // 表示するスキルアイコンを管理するメソッド
-    public void ImageSet()
+    public void SetNext()
     {
-        Destroy(imageObj);
-        count++;
-        if(count >= imageArray.Length)
-        {
-            count = 0;
-        }
-        Debug.Log("ボタンが押されました！"); //確認用
-        imageObj = GameObject.Instantiate(imageArray[count]) as GameObject;
+        skillSetArray[count].SetActive(false);
+
+        count = (count + 1) % skillSetArray.Length;
+
+        skillSetArray[count].SetActive(true);
+        Debug.Log("次のスキルを表示");
+    }
+
+    public void SetBack()
+    {
+        skillSetArray[count].SetActive(false);
+
+        count = (count - 1 + skillSetArray.Length) % skillSetArray.Length;
+
+        skillSetArray[count].SetActive(true);
+        Debug.Log("前のスキルを表示");
     }
 }
