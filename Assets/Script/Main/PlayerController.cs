@@ -23,18 +23,6 @@ public class PlayerController : NetworkBehaviour
 
         if (!IsOwner) return;
 
-        if (IsServer && Input.GetKeyDown(KeyCode.Space))
-        {
-            if (GameManager.Instance.CurrentState == GameManager.GameState.Connecting)
-            {
-                GameManager.Instance.StartGame();
-            }
-        }
-        /*if(GameManager.Instance != null)
-        {
-            Debug.Log("GameManagerInstance: " + GameManager.Instance + ",  GameManager.Instance.CurrentState: " + GameManager.Instance.CurrentState);
-        }*/
-
         if (GameManager.Instance == null || GameManager.Instance.CurrentState != GameManager.GameState.Playing)
         {
             return;
@@ -43,10 +31,6 @@ public class PlayerController : NetworkBehaviour
         if (Input.GetMouseButtonDown(0) && canShoot)
         {
             TryShoot();
-        }
-        else
-        {
-            Debug.Log("canShoot: " + canShoot);
         }
     }
 
@@ -114,5 +98,17 @@ public class PlayerController : NetworkBehaviour
             crosshairController.HasAlreadyHit = false;
             crosshairController.RemainingBullets = 5;
         }
+    }
+
+    public void NotifyReadyForRound()
+    {
+        if (!IsOwner) return;
+        NotifyReadyServerRpc();
+    }
+
+    [ServerRpc]
+    private void NotifyReadyServerRpc(ServerRpcParams rpcParams = default)
+    {
+        GameManager.Instance.NotifyReadyForRoundServerRpc(OwnerClientId);
     }
 }

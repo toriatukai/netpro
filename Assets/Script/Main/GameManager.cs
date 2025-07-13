@@ -1,8 +1,13 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
+using System.Threading;
+using Random = UnityEngine.Random;
+
+
 
 public class GameManager : NetworkBehaviour
 {
@@ -27,7 +32,6 @@ public class GameManager : NetworkBehaviour
     private int currentRound = 0;
     //private bool roundInProgress = false;
 
-    [SerializeField] private GameObject targetPrefab;
     [SerializeField] private int maxBullets = 5;
 
     private NetworkVariable<float> targetDisplayTime = new(writePerm: NetworkVariableWritePermission.Server);
@@ -37,6 +41,11 @@ public class GameManager : NetworkBehaviour
     private float maxDelay = 8f;
 
     private bool roundEndCheckScheduled = false;
+
+    private CancellationTokenSource targetSpawnCts;
+
+    private HashSet<ulong> readyPlayers = new();
+
 
     private void Awake()
     {
@@ -65,16 +74,42 @@ public class GameManager : NetworkBehaviour
         Debug.Log("All players initialized.");
     }
 
-    public void StartGame()
+    [ServerRpc(RequireOwnership = false)]
+    public void NotifyReadyForRoundServerRpc(ulong clientId)
     {
-        if (!IsServer) return;
+        if (!readyPlayers.Contains(clientId))
+            readyPlayers.Add(clientId);
 
-        currentRound = 0;
-        Debug.Log("ゲーム開始");
-        SetGameState(GameState.Countdown);
-        CountdownAndStartNextRound().Forget();
+        Debug.Log($"Client {clientId} is ready. Total ready: {readyPlayers.Count}");
+
+        if (readyPlayers.Count >= 2)
+        {
+            readyPlayers.Clear();
+            StartRoundCountdown().Forget();
+        }
     }
 
+    private async UniTaskVoid StartRoundCountdown()
+    {
+        SetGameState(GameState.Countdown);
+        ShowCountdownTextClientRpc("3");
+        await UniTask.Delay(1000);
+        ShowCountdownTextClientRpc("2");
+        await UniTask.Delay(1000);
+        ShowCountdownTextClientRpc("1");
+        await UniTask.Delay(1000);
+        ShowCountdownTextClientRpc("");
+
+        SetGameState(GameState.Playing);
+        StartNextRound();
+    }
+
+    [ClientRpc]
+    private void ShowCountdownTextClientRpc(string text)
+    {
+        GameUIManager.Instance.ShowCountdownText(text);
+        GameUIManager.Instance.HideBeforeRoundPanel();
+    }
 
     private async UniTaskVoid CountdownAndStartNextRound()
     {
@@ -96,11 +131,9 @@ public class GameManager : NetworkBehaviour
         //GameUIManager.Instance.ResetReactionTime(); // テキストのリセット
         if (!IsServer) return;
 
-        if (currentRound >= 3)
-        {
-            EvaluateFinalResult();
-            return;
-        }
+        // キャンセル前のタスクの中断
+        targetSpawnCts?.Cancel();
+        targetSpawnCts = new CancellationTokenSource();
 
         currentRound++;
         Debug.Log($"ラウンド{currentRound}開始");
@@ -112,9 +145,9 @@ public class GameManager : NetworkBehaviour
 
         ResetClientStateClientRpc();
 
-        UpdateRoundClientRpc(currentRound);
+        SetGameState(GameState.Playing);
 
-        SpawnTargetAsync().Forget();
+        SpawnTargetAsync(targetSpawnCts.Token).Forget();
     }
 
     [ClientRpc]
@@ -129,19 +162,22 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    [ClientRpc]
-    private void UpdateRoundClientRpc(int round)
-    {
-        GameUIManager.Instance.UpdateRoundText(round);
-        GameUIManager.Instance.ResetReactionTime();
-        GameUIManager.Instance.UpdateBulletsText(maxBullets);
-    }
-
-    private async UniTask SpawnTargetAsync()
+    private async UniTask SpawnTargetAsync(CancellationToken token)
     {
         float delay = Random.Range(minDelay, maxDelay);
         Debug.Log($"ラウンド{currentRound}: ターゲット出現まで {delay:F2}秒待機");
         await UniTask.Delay(System.TimeSpan.FromSeconds(delay));
+
+        try
+        {
+            await UniTask.Delay(System.TimeSpan.FromSeconds(delay), cancellationToken: token);
+        }
+        catch (OperationCanceledException)
+        {
+            Debug.Log("的の出現はキャンセルされました");
+            return;
+        }
+
 
         if (!IsServer) return;
 
@@ -198,9 +234,10 @@ public class GameManager : NetworkBehaviour
 
     private void EvaluateRoundResult()
     {
-        //roundInProgress = false;
 
         SetGameState(GameState.RoundEnd); // ラウンド終了
+
+        targetSpawnCts?.Cancel(); // 的の出現をキャンセル
 
         ClearTargetClientRpc(); // 的の削除
 
@@ -211,7 +248,20 @@ public class GameManager : NetworkBehaviour
 
         Debug.Log($"ラウンド{currentRound}結果 判定中...");
 
+        GameUIManager.Instance.UpdateRoundResult(currentRound - 1, timeA, timeB);
+
         int result = CompareTimes(timeA, timeB);
+
+        string winnerName = result switch
+        {
+            1 => "ホストの勝利！",
+            -1 => "クライアントの勝利！",
+            _ => "引き分け"
+        };
+
+        UpdateRoundResultClientRpc(currentRound - 1, timeA, timeB);
+        ShowResultPanelClientRpc(winnerName);
+
         Debug.Log("Player0: " + timeA + ", Player1: " + timeB + ", result: " + result);
         if (result == 0)
             Debug.Log("ラウンド引き分け");
@@ -226,15 +276,55 @@ public class GameManager : NetworkBehaviour
             Debug.Log($"Player {players[1].ClientId} の勝ち");
         }
 
+        bool hasNextRound = currentRound < 3;
+        GameUIManager.Instance.ShowNextOrEndButton(hasNextRound);
+        ShowNextOrEndButtonClientRpc(hasNextRound);
+
+
         roundEndCheckScheduled = false;
 
         UniTask.Void(async () =>
         {
             await UniTask.Delay(2000);
-            SetGameState(GameState.Playing);
-            
-            StartNextRound();
+            if (currentRound >= 3)
+            {
+                EvaluateFinalResult(); // 最終判定に進む
+            }
+            else
+            {
+                UpdateRoundClientRpc(currentRound + 1);
+                //ShowBeforeRoundPanelClientRpc(); // パネル再表示
+            }
+
         });
+    }
+
+    [ClientRpc]
+    private void ShowResultPanelClientRpc(string winnerName)
+    {
+        GameUIManager.Instance.ShowResultPanel();
+        GameUIManager.Instance.SetWinnerText(winnerName);
+    }
+
+    [ClientRpc]
+    private void UpdateRoundResultClientRpc(int roundIndex, float hostTime, float clientTime)
+    {
+        GameUIManager.Instance.UpdateRoundResult(roundIndex, hostTime, clientTime);
+    }
+
+    [ClientRpc]
+    private void ShowNextOrEndButtonClientRpc(bool hasNextRound)
+    {
+        GameUIManager.Instance.ShowNextOrEndButton(hasNextRound);
+        GameUIManager.Instance.EnableStartButton();
+    }
+
+    [ClientRpc]
+    private void UpdateRoundClientRpc(int round)
+    {
+        GameUIManager.Instance.UpdateRoundText(round);
+        GameUIManager.Instance.ResetReactionTime();
+        GameUIManager.Instance.UpdateBulletsText(maxBullets);
     }
 
     [ClientRpc]
@@ -242,6 +332,13 @@ public class GameManager : NetworkBehaviour
     {
         TargetSpawner.Instance.ClearAllTargets();
     }
+
+    /*[ClientRpc]
+    private void ShowBeforeRoundPanelClientRpc()
+    {
+        GameUIManager.Instance.ShowBeforeRoundPanel();
+        GameUIManager.Instance.EnableStartButton();
+    }*/
 
 
     private int CompareTimes(float a, float b)
@@ -259,26 +356,45 @@ public class GameManager : NetworkBehaviour
     {
         Debug.Log("ゲーム終了。最終勝者判定");
 
+        string winnerName = "";
         var players = playerDataDict.Values.ToList();
         int winA = players[0].WinCount;
         int winB = players[1].WinCount;
 
         if (winA > winB)
+        {
             Debug.Log($"Player {players[0].ClientId} の勝利！");
+            winnerName = "ラウンド取得数でホストの勝利！";
+        }
         else if (winB > winA)
+        {
             Debug.Log($"Player {players[1].ClientId} の勝利！");
+            winnerName = "ラウンド取得数でクライアントの勝利！";
+        }
         else
         {
             float sumA = players[0].ReactionTimes.Sum();
             float sumB = players[1].ReactionTimes.Sum();
 
             if (sumA < sumB)
+            {
                 Debug.Log($"Player {players[0].ClientId} がタイム合計で勝利！");
+                winnerName = "タイム合計でホストの勝利！";
+            }
             else if (sumB < sumA)
+            {
                 Debug.Log($"Player {players[1].ClientId} がタイム合計で勝利！");
+                winnerName = "タイム合計でクライアントの勝利！";
+            }
             else
+            {
                 Debug.Log("合計タイムも同じためホストの勝ち！");
+                winnerName = "タイム合計で引き分け！";
+            }
         }
+
+        
+        ShowResultPanelClientRpc(winnerName);
 
         SetGameState(GameState.GameOver); // ゲーム終了
     }
