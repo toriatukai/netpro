@@ -4,6 +4,9 @@ using Unity.Netcode;
 public class PlayerController : NetworkBehaviour
 {
     [SerializeField] private CrosshairController crosshairController;
+    [SerializeField] private GameObject crosshair; // ÉNÉçÉXÉwÉAÇÃUI
+    private Vector2 defaultCrosshairSize = new Vector3(1f, 1f, 1f);
+    private Vector2 enlargedCrosshairSize = new Vector3(3f, 3f, 3f);
 
     private bool canShoot = false;
 
@@ -110,5 +113,15 @@ public class PlayerController : NetworkBehaviour
     private void NotifyReadyServerRpc(ServerRpcParams rpcParams = default)
     {
         GameManager.Instance.NotifyReadyForRoundServerRpc(OwnerClientId);
+    }
+
+    public void ApplyArtillerySkill()
+    {
+        crosshair.transform.localScale = enlargedCrosshairSize;
+    }
+
+    public void ResetCrosshairSize()
+    {
+        crosshair.transform.localScale = defaultCrosshairSize;
     }
 }

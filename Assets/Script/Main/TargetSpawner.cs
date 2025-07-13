@@ -7,6 +7,8 @@ public class TargetSpawner : MonoBehaviour
     public static TargetSpawner Instance;
 
     [SerializeField] private GameObject targetPrefab;
+    [SerializeField] private GameObject decoyPrefab;
+    private GameObject currentDecoy;
 
     [Range(0.1f, 1f)] public float widthRate = 0.5f;
     [Range(0.1f, 1f)] public float heightRate = 0.5f;
@@ -43,6 +45,7 @@ public class TargetSpawner : MonoBehaviour
         return new Vector3(x, y, 0f);
     }
 
+
     public void ClearAllTargets()
     {
         foreach (var target in GameObject.FindGameObjectsWithTag("Target"))
@@ -53,6 +56,25 @@ public class TargetSpawner : MonoBehaviour
         foreach (var decoy in GameObject.FindGameObjectsWithTag("Decoy"))
         {
             Destroy(decoy);
+        }
+    }
+    
+    // デコイ出現の処理
+    public void SpawnDecoyByRatio(float xRate, float yRate)
+    {
+        ClearDecoy();
+
+        Vector3 screenPos = CalculateSpawnPosition(xRate, yRate);
+
+        currentDecoy = Instantiate(decoyPrefab, screenPos, Quaternion.identity);
+    }
+
+    public void ClearDecoy()
+    {
+        if (currentDecoy != null)
+        {
+            Destroy(currentDecoy);
+            currentDecoy = null;
         }
     }
 }

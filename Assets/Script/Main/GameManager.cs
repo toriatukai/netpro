@@ -11,15 +11,16 @@ using Random = UnityEngine.Random;
 
 public class GameManager : NetworkBehaviour
 {
+    // ゲームの状態
     public enum GameState
     {
         Connecting,
-        WaitingForPlayers,
         Countdown,
         Playing,
         RoundEnd,
         GameOver
     }
+
     //public static GameManager Instance;
 
     public static GameManager Instance { get; private set; }
@@ -91,7 +92,34 @@ public class GameManager : NetworkBehaviour
 
     private async UniTaskVoid StartRoundCountdown()
     {
-        SetGameState(GameState.Countdown);
+        foreach (var kv in playerDataDict)
+        {
+            var clientId = kv.Key;
+            var data = kv.Value;
+
+            if (data.SelectedSkill == SkillType.Artillery && data.WillUseSkill)
+            {
+                data.WillUseSkill = false;
+                ApplyArtillerySkillClientRpc(new ClientRpcParams
+                {
+                    Send = new ClientRpcSendParams
+                    {
+                        TargetClientIds = new[] { clientId }
+                    }
+                });
+            }
+            else
+            {
+                ResetCrosshairClientRpc(new ClientRpcParams
+                {
+                    Send = new ClientRpcSendParams
+                    {
+                        TargetClientIds = new[] { clientId }
+                    }
+                });
+            }
+        }
+
         ShowCountdownTextClientRpc("3");
         await UniTask.Delay(1000);
         ShowCountdownTextClientRpc("2");
@@ -105,20 +133,33 @@ public class GameManager : NetworkBehaviour
     }
 
     [ClientRpc]
+    private void ApplyArtillerySkillClientRpc(ClientRpcParams clientRpcParams = default)
+    {
+        Debug.Log($"ApplyArtillerySkillClientRpc called on client {NetworkManager.LocalClientId}");
+        if (PlayerController.LocalInstance != null)
+        {
+            PlayerController.LocalInstance.ApplyArtillerySkill();
+            GameUIManager.Instance.toggle.Value = false;
+            GameUIManager.Instance.toggle.gameObject.SetActive(false);
+        }
+    }
+
+    [ClientRpc]
+    private void ResetCrosshairClientRpc(ClientRpcParams clientRpcParams = default)
+    {
+        if (PlayerController.LocalInstance != null)
+        {
+            PlayerController.LocalInstance.ResetCrosshairSize();
+        }
+    }
+
+    [ClientRpc]
     private void ShowCountdownTextClientRpc(string text)
     {
         GameUIManager.Instance.ShowCountdownText(text);
         GameUIManager.Instance.HideBeforeRoundPanel();
     }
 
-    private async UniTaskVoid CountdownAndStartNextRound()
-    {
-        await UniTask.Delay(2000); // カウントダウン演出（任意）
-
-        SetGameState(GameState.Playing); // ここで撃てるようになる
-
-        StartNextRound();
-    }
     public void SetGameState(GameState newState)
     {
         currentState.Value = newState;
@@ -128,7 +169,6 @@ public class GameManager : NetworkBehaviour
 
     private void StartNextRound()
     {
-        //GameUIManager.Instance.ResetReactionTime(); // テキストのリセット
         if (!IsServer) return;
 
         // キャンセル前のタスクの中断
@@ -145,6 +185,8 @@ public class GameManager : NetworkBehaviour
 
         ResetClientStateClientRpc();
 
+        UpdateRoundClientRpc(currentRound);
+
         SetGameState(GameState.Playing);
 
         SpawnTargetAsync(targetSpawnCts.Token).Forget();
@@ -153,20 +195,23 @@ public class GameManager : NetworkBehaviour
     [ClientRpc]
     private void ResetClientStateClientRpc()
     {
-        Debug.Log("クライアント側でリセット処理実行");
 
         // 例: クロスヘアの弾数・命中フラグをリセット（オーナーだけ）
         if (PlayerController.LocalInstance != null)
         {
             PlayerController.LocalInstance.ResetClientRound();
+
         }
+
     }
 
     private async UniTask SpawnTargetAsync(CancellationToken token)
     {
         float delay = Random.Range(minDelay, maxDelay);
         Debug.Log($"ラウンド{currentRound}: ターゲット出現まで {delay:F2}秒待機");
-        await UniTask.Delay(System.TimeSpan.FromSeconds(delay));
+
+        SendSkillCountdownToClientsClientRpc(delay); // ガンマンのスキル確認
+
 
         try
         {
@@ -191,6 +236,92 @@ public class GameManager : NetworkBehaviour
 
         // 全クライアントに的出現通知
         SendSpawnTargetClientRpc(xRate, yRate);
+        TryShowDecoyTarget(xRate, yRate);
+    }
+
+    private void TryShowDecoyTarget(float trueX, float trueY)
+    {
+        // デコイ表示処理
+        foreach (var kv in playerDataDict)
+        {
+            ulong clientId = kv.Key;
+            var data = kv.Value;
+
+            if (data.SelectedSkill == SkillType.Engineer && data.WillUseSkill)
+            {
+                data.WillUseSkill = false;
+
+                // 使用済みにしてトグル非表示
+                GameUIManager.Instance.toggle.Value = false;
+                GameUIManager.Instance.toggle.gameObject.SetActive(false);
+
+                // 本物とかぶらない位置
+                Vector2 decoyPos;
+                do
+                {
+                    decoyPos = new Vector2(Random.Range(0f, 1f), Random.Range(0f, 1f));
+                } while (Vector2.Distance(decoyPos, new Vector2(trueX, trueY)) < 0.2f); // 距離が近すぎたら再生成
+
+                // 相手にだけ送信
+                foreach (var otherClient in playerDataDict.Keys)
+                {
+                    Debug.Log($"デコイ送信対象: {otherClient} に decoyX:{decoyPos.x} / decoyY:{decoyPos.y}");
+                    if (otherClient != clientId)
+                    {
+                        SendDecoyTargetClientRpc(decoyPos.x, decoyPos.y, new ClientRpcParams
+                        {
+                            Send = new ClientRpcSendParams
+                            {
+                                TargetClientIds = new[] { otherClient }
+                            }
+                        });
+                    }
+                }
+
+                DisableSkillToggleClientRpc(new ClientRpcParams
+                {
+                    Send = new ClientRpcSendParams
+                    {
+                        TargetClientIds = new[] { clientId }
+                    }
+                });
+            }
+            else
+            {
+                Debug.Log(GameUIManager.Instance.toggle.Value);
+            }
+        }
+    }
+    [ClientRpc]
+    private void DisableSkillToggleClientRpc(ClientRpcParams clientRpcParams = default)
+    {
+        GameUIManager.Instance.toggle.Value = false;
+        GameUIManager.Instance.toggle.gameObject.SetActive(false);
+    }
+
+
+    [ClientRpc]
+    private void SendDecoyTargetClientRpc(float xRate, float yRate, ClientRpcParams clientRpcParams = default)
+    {
+        TargetSpawner.Instance.SpawnDecoyByRatio(xRate, yRate);
+    }
+
+    [ClientRpc]
+    private void SendSkillCountdownToClientsClientRpc(float delay)
+    {
+        if (GameUIManager.Instance.currentSkill == SkillType.Gunman &&
+            GameUIManager.Instance.toggle.Value) // トグルがオンなら発動
+        {
+            // スキルを使い終わったら無効化
+            GameUIManager.Instance.toggle.Value = false;
+            GameUIManager.Instance.toggle.gameObject.SetActive(false);
+
+            GameUIManager.Instance.StartSkillCountdown(delay);
+        }
+        else
+        {
+            GameUIManager.Instance.HideSkillCountdown();
+        }
     }
 
     [ClientRpc]
@@ -219,6 +350,17 @@ public class GameManager : NetworkBehaviour
         Debug.Log($"Client {clientId} 反応時間受信: {reactionTime}");
 
         CheckRoundEnd();
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void SetSelectedSkillServerRpc(ulong clientId, SkillType skill, bool willUse)
+    {
+        if (playerDataDict.TryGetValue(clientId, out var data))
+        {
+            data.SelectedSkill = skill;
+            data.WillUseSkill = willUse;
+            Debug.Log($"Client {clientId} selected skill: {skill}, willUse: {willUse}");
+        }
     }
 
     private void CheckRoundEnd()
@@ -280,6 +422,10 @@ public class GameManager : NetworkBehaviour
         GameUIManager.Instance.ShowNextOrEndButton(hasNextRound);
         ShowNextOrEndButtonClientRpc(hasNextRound);
 
+        foreach (var data in playerDataDict.Values)
+        {
+            //data.WillUseSkill = false;
+        }
 
         roundEndCheckScheduled = false;
 
@@ -331,15 +477,8 @@ public class GameManager : NetworkBehaviour
     private void ClearTargetClientRpc()
     {
         TargetSpawner.Instance.ClearAllTargets();
+        TargetSpawner.Instance.ClearDecoy(); // デコイも削除
     }
-
-    /*[ClientRpc]
-    private void ShowBeforeRoundPanelClientRpc()
-    {
-        GameUIManager.Instance.ShowBeforeRoundPanel();
-        GameUIManager.Instance.EnableStartButton();
-    }*/
-
 
     private int CompareTimes(float a, float b)
     {
@@ -409,6 +548,9 @@ public class PlayerRoundData
     public int WinCount = 0;
     public int RemainingBullets = 5;
     public bool HasFinishedThisRound = false;
+    public bool WillUseSkill = false;
+
+    public SkillType SelectedSkill = SkillType.None;
 
     public PlayerRoundData(ulong clientId)
     {

@@ -33,6 +33,13 @@ public class Toggle : MonoBehaviour
     {
         Value = !Value;
         UpdateToggle(SWITCH_DURATION);
+        if (GameUIManager.Instance != null && GameManager.Instance != null)
+        {
+            ulong clientId = Unity.Netcode.NetworkManager.Singleton.LocalClientId;
+            SkillType selectedSkill = Value ? GameUIManager.Instance.currentSkill : SkillType.None;
+            GameManager.Instance.SetSelectedSkillServerRpc(clientId, selectedSkill, Value);
+        
+        }
     }
 
     // èÛë‘ÇîΩâfÇ≥ÇπÇÈ
