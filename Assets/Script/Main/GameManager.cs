@@ -135,13 +135,9 @@ public class GameManager : NetworkBehaviour
     [ClientRpc]
     private void ApplyArtillerySkillClientRpc(ClientRpcParams clientRpcParams = default)
     {
-        Debug.Log($"ApplyArtillerySkillClientRpc called on client {NetworkManager.LocalClientId}");
-        if (PlayerController.LocalInstance != null)
-        {
-            PlayerController.LocalInstance.ApplyArtillerySkill();
-            GameUIManager.Instance.toggle.Value = false;
-            GameUIManager.Instance.toggle.gameObject.SetActive(false);
-        }
+        PlayerController.LocalInstance.ApplyArtillerySkill();
+        GameUIManager.Instance.toggle.Value = false;
+        GameUIManager.Instance.toggle.gameObject.SetActive(false);
     }
 
     [ClientRpc]
@@ -250,10 +246,6 @@ public class GameManager : NetworkBehaviour
             if (data.SelectedSkill == SkillType.Engineer && data.WillUseSkill)
             {
                 data.WillUseSkill = false;
-
-                // 使用済みにしてトグル非表示
-                GameUIManager.Instance.toggle.Value = false;
-                GameUIManager.Instance.toggle.gameObject.SetActive(false);
 
                 // 本物とかぶらない位置
                 Vector2 decoyPos;
