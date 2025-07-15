@@ -1,0 +1,11 @@
+fileFormatVersion: 2
+<<<<<<<< HEAD:Assets/Prefab/Test/Image1.prefab.meta
+guid: 00b45753462fdf746b0793df5ad3abb6
+========
+guid: 48d121f94a39ca443ad25518e148784e
+>>>>>>>> Dev:Assets/Prefab/DecoyTarget.prefab.meta
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
