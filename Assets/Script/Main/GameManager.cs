@@ -1,26 +1,20 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
-using System.Threading;
-using Random = UnityEngine.Random;
-
-
 
 public class GameManager : NetworkBehaviour
 {
-    // ゲームの状態
     public enum GameState
     {
         Connecting,
+        WaitingForPlayers,
         Countdown,
         Playing,
         RoundEnd,
         GameOver
     }
-
     //public static GameManager Instance;
 
     public static GameManager Instance { get; private set; }
@@ -31,9 +25,9 @@ public class GameManager : NetworkBehaviour
 
     private Dictionary<ulong, PlayerRoundData> playerDataDict = new();
     private int currentRound = 0;
-    //private bool roundInProgress = false;
+    private bool roundInProgress = false;
 
-    [SerializeField] private int maxBullets = 5;
+    [SerializeField] private GameObject targetPrefab;
 
     private NetworkVariable<float> targetDisplayTime = new(writePerm: NetworkVariableWritePermission.Server);
     public float TargetDisplayTime => targetDisplayTime.Value;
@@ -42,11 +36,6 @@ public class GameManager : NetworkBehaviour
     private float maxDelay = 8f;
 
     private bool roundEndCheckScheduled = false;
-
-    private CancellationTokenSource targetSpawnCts;
-
-    private HashSet<ulong> readyPlayers = new();
-
 
     private void Awake()
     {
@@ -75,87 +64,24 @@ public class GameManager : NetworkBehaviour
         Debug.Log("All players initialized.");
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    public void NotifyReadyForRoundServerRpc(ulong clientId)
+    public void StartGame()
     {
-        if (!readyPlayers.Contains(clientId))
-            readyPlayers.Add(clientId);
+        if (!IsServer) return;
 
-        Debug.Log($"Client {clientId} is ready. Total ready: {readyPlayers.Count}");
-
-        if (readyPlayers.Count >= 2)
-        {
-            readyPlayers.Clear();
-            StartRoundCountdown().Forget();
-        }
+        currentRound = 0;
+        Debug.Log("ゲーム開始");
+        SetGameState(GameState.Countdown);
+        CountdownAndStartNextRound().Forget();
     }
 
-    private async UniTaskVoid StartRoundCountdown()
+
+    private async UniTaskVoid CountdownAndStartNextRound()
     {
-        foreach (var kv in playerDataDict)
-        {
-            var clientId = kv.Key;
-            var data = kv.Value;
+        await UniTask.Delay(2000); // カウントダウン演出（任意）
 
-            if (data.SelectedSkill == SkillType.Artillery && data.WillUseSkill)
-            {
-                data.WillUseSkill = false;
-                ApplyArtillerySkillClientRpc(new ClientRpcParams
-                {
-                    Send = new ClientRpcSendParams
-                    {
-                        TargetClientIds = new[] { clientId }
-                    }
-                });
-            }
-            else
-            {
-                ResetCrosshairClientRpc(new ClientRpcParams
-                {
-                    Send = new ClientRpcSendParams
-                    {
-                        TargetClientIds = new[] { clientId }
-                    }
-                });
-            }
-        }
-
-        ShowCountdownTextClientRpc("3");
-        await UniTask.Delay(1000);
-        ShowCountdownTextClientRpc("2");
-        await UniTask.Delay(1000);
-        ShowCountdownTextClientRpc("1");
-        await UniTask.Delay(1000);
-        ShowCountdownTextClientRpc("");
-
-        SetGameState(GameState.Playing);
+        SetGameState(GameState.Playing); // ここで撃てるようになる
         StartNextRound();
     }
-
-    [ClientRpc]
-    private void ApplyArtillerySkillClientRpc(ClientRpcParams clientRpcParams = default)
-    {
-        PlayerController.LocalInstance.ApplyArtillerySkill();
-        GameUIManager.Instance.toggle.Value = false;
-        GameUIManager.Instance.toggle.gameObject.SetActive(false);
-    }
-
-    [ClientRpc]
-    private void ResetCrosshairClientRpc(ClientRpcParams clientRpcParams = default)
-    {
-        if (PlayerController.LocalInstance != null)
-        {
-            PlayerController.LocalInstance.ResetCrosshairSize();
-        }
-    }
-
-    [ClientRpc]
-    private void ShowCountdownTextClientRpc(string text)
-    {
-        GameUIManager.Instance.ShowCountdownText(text);
-        GameUIManager.Instance.HideBeforeRoundPanel();
-    }
-
     public void SetGameState(GameState newState)
     {
         currentState.Value = newState;
@@ -167,58 +93,44 @@ public class GameManager : NetworkBehaviour
     {
         if (!IsServer) return;
 
-        // キャンセル前のタスクの中断
-        targetSpawnCts?.Cancel();
-        targetSpawnCts = new CancellationTokenSource();
+        if (currentRound >= 3)
+        {
+            EvaluateFinalResult();
+            return;
+        }
 
         currentRound++;
         Debug.Log($"ラウンド{currentRound}開始");
 
         foreach (var p in playerDataDict.Values)
         {
-            p.ResetRound(maxBullets);
+            p.ResetRound();
         }
 
         ResetClientStateClientRpc();
 
-        UpdateRoundClientRpc(currentRound);
+        roundInProgress = true;
 
-        SetGameState(GameState.Playing);
-
-        SpawnTargetAsync(targetSpawnCts.Token).Forget();
+        SpawnTargetAsync().Forget();
     }
 
     [ClientRpc]
     private void ResetClientStateClientRpc()
     {
+        Debug.Log("クライアント側でリセット処理実行");
 
         // 例: クロスヘアの弾数・命中フラグをリセット（オーナーだけ）
         if (PlayerController.LocalInstance != null)
         {
             PlayerController.LocalInstance.ResetClientRound();
-
         }
-
     }
 
-    private async UniTask SpawnTargetAsync(CancellationToken token)
+    private async UniTask SpawnTargetAsync()
     {
         float delay = Random.Range(minDelay, maxDelay);
         Debug.Log($"ラウンド{currentRound}: ターゲット出現まで {delay:F2}秒待機");
-
-        SendSkillCountdownToClientsClientRpc(delay); // ガンマンのスキル確認
-
-
-        try
-        {
-            await UniTask.Delay(System.TimeSpan.FromSeconds(delay), cancellationToken: token);
-        }
-        catch (OperationCanceledException)
-        {
-            Debug.Log("的の出現はキャンセルされました");
-            return;
-        }
-
+        await UniTask.Delay(System.TimeSpan.FromSeconds(delay));
 
         if (!IsServer) return;
 
@@ -232,88 +144,6 @@ public class GameManager : NetworkBehaviour
 
         // 全クライアントに的出現通知
         SendSpawnTargetClientRpc(xRate, yRate);
-        TryShowDecoyTarget(xRate, yRate);
-    }
-
-    private void TryShowDecoyTarget(float trueX, float trueY)
-    {
-        // デコイ表示処理
-        foreach (var kv in playerDataDict)
-        {
-            ulong clientId = kv.Key;
-            var data = kv.Value;
-
-            if (data.SelectedSkill == SkillType.Engineer && data.WillUseSkill)
-            {
-                data.WillUseSkill = false;
-
-                // 本物とかぶらない位置
-                Vector2 decoyPos;
-                do
-                {
-                    decoyPos = new Vector2(Random.Range(0f, 1f), Random.Range(0f, 1f));
-                } while (Vector2.Distance(decoyPos, new Vector2(trueX, trueY)) < 0.2f); // 距離が近すぎたら再生成
-
-                // 相手にだけ送信
-                foreach (var otherClient in playerDataDict.Keys)
-                {
-                    Debug.Log($"デコイ送信対象: {otherClient} に decoyX:{decoyPos.x} / decoyY:{decoyPos.y}");
-                    if (otherClient != clientId)
-                    {
-                        SendDecoyTargetClientRpc(decoyPos.x, decoyPos.y, new ClientRpcParams
-                        {
-                            Send = new ClientRpcSendParams
-                            {
-                                TargetClientIds = new[] { otherClient }
-                            }
-                        });
-                    }
-                }
-
-                DisableSkillToggleClientRpc(new ClientRpcParams
-                {
-                    Send = new ClientRpcSendParams
-                    {
-                        TargetClientIds = new[] { clientId }
-                    }
-                });
-            }
-            else
-            {
-                Debug.Log(GameUIManager.Instance.toggle.Value);
-            }
-        }
-    }
-    [ClientRpc]
-    private void DisableSkillToggleClientRpc(ClientRpcParams clientRpcParams = default)
-    {
-        GameUIManager.Instance.toggle.Value = false;
-        GameUIManager.Instance.toggle.gameObject.SetActive(false);
-    }
-
-
-    [ClientRpc]
-    private void SendDecoyTargetClientRpc(float xRate, float yRate, ClientRpcParams clientRpcParams = default)
-    {
-        TargetSpawner.Instance.SpawnDecoyByRatio(xRate, yRate);
-    }
-
-    [ClientRpc]
-    private void SendSkillCountdownToClientsClientRpc(float delay)
-    {
-        if (GameUIManager.Instance.currentSkill == SkillType.Gunman &&
-            GameUIManager.Instance.toggle.Value) // トグルがオンなら発動
-        {
-            // スキルを使い終わったら無効化
-            GameUIManager.Instance.toggle.Value = false;
-            GameUIManager.Instance.toggle.gameObject.SetActive(false);
-
-            GameUIManager.Instance.StartSkillCountdown(delay);
-        }
-        else
-        {
-            GameUIManager.Instance.HideSkillCountdown();
-        }
     }
 
     [ClientRpc]
@@ -344,17 +174,6 @@ public class GameManager : NetworkBehaviour
         CheckRoundEnd();
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    public void SetSelectedSkillServerRpc(ulong clientId, SkillType skill, bool willUse)
-    {
-        if (playerDataDict.TryGetValue(clientId, out var data))
-        {
-            data.SelectedSkill = skill;
-            data.WillUseSkill = willUse;
-            Debug.Log($"Client {clientId} selected skill: {skill}, willUse: {willUse}");
-        }
-    }
-
     private void CheckRoundEnd()
     {
         if (roundEndCheckScheduled) return;
@@ -368,12 +187,9 @@ public class GameManager : NetworkBehaviour
 
     private void EvaluateRoundResult()
     {
+        roundInProgress = false;
 
         SetGameState(GameState.RoundEnd); // ラウンド終了
-
-        targetSpawnCts?.Cancel(); // 的の出現をキャンセル
-
-        ClearTargetClientRpc(); // 的の削除
 
         var players = playerDataDict.Values.ToList();
 
@@ -382,20 +198,7 @@ public class GameManager : NetworkBehaviour
 
         Debug.Log($"ラウンド{currentRound}結果 判定中...");
 
-        GameUIManager.Instance.UpdateRoundResult(currentRound - 1, timeA, timeB);
-
         int result = CompareTimes(timeA, timeB);
-
-        string winnerName = result switch
-        {
-            1 => "ホストの勝利！",
-            -1 => "クライアントの勝利！",
-            _ => "引き分け"
-        };
-
-        UpdateRoundResultClientRpc(currentRound - 1, timeA, timeB);
-        ShowResultPanelClientRpc(winnerName);
-
         Debug.Log("Player0: " + timeA + ", Player1: " + timeB + ", result: " + result);
         if (result == 0)
             Debug.Log("ラウンド引き分け");
@@ -410,67 +213,16 @@ public class GameManager : NetworkBehaviour
             Debug.Log($"Player {players[1].ClientId} の勝ち");
         }
 
-        bool hasNextRound = currentRound < 3;
-        GameUIManager.Instance.ShowNextOrEndButton(hasNextRound);
-        ShowNextOrEndButtonClientRpc(hasNextRound);
-
-        foreach (var data in playerDataDict.Values)
-        {
-            //data.WillUseSkill = false;
-        }
-
         roundEndCheckScheduled = false;
 
         UniTask.Void(async () =>
         {
             await UniTask.Delay(2000);
-            if (currentRound >= 3)
-            {
-                EvaluateFinalResult(); // 最終判定に進む
-            }
-            else
-            {
-                UpdateRoundClientRpc(currentRound + 1);
-                //ShowBeforeRoundPanelClientRpc(); // パネル再表示
-            }
-
+            SetGameState(GameState.Playing);
+            StartNextRound();
         });
     }
 
-    [ClientRpc]
-    private void ShowResultPanelClientRpc(string winnerName)
-    {
-        GameUIManager.Instance.ShowResultPanel();
-        GameUIManager.Instance.SetWinnerText(winnerName);
-    }
-
-    [ClientRpc]
-    private void UpdateRoundResultClientRpc(int roundIndex, float hostTime, float clientTime)
-    {
-        GameUIManager.Instance.UpdateRoundResult(roundIndex, hostTime, clientTime);
-    }
-
-    [ClientRpc]
-    private void ShowNextOrEndButtonClientRpc(bool hasNextRound)
-    {
-        GameUIManager.Instance.ShowNextOrEndButton(hasNextRound);
-        GameUIManager.Instance.EnableStartButton();
-    }
-
-    [ClientRpc]
-    private void UpdateRoundClientRpc(int round)
-    {
-        GameUIManager.Instance.UpdateRoundText(round);
-        GameUIManager.Instance.ResetReactionTime();
-        GameUIManager.Instance.UpdateBulletsText(maxBullets);
-    }
-
-    [ClientRpc]
-    private void ClearTargetClientRpc()
-    {
-        TargetSpawner.Instance.ClearAllTargets();
-        TargetSpawner.Instance.ClearDecoy(); // デコイも削除
-    }
 
     private int CompareTimes(float a, float b)
     {
@@ -487,45 +239,26 @@ public class GameManager : NetworkBehaviour
     {
         Debug.Log("ゲーム終了。最終勝者判定");
 
-        string winnerName = "";
         var players = playerDataDict.Values.ToList();
         int winA = players[0].WinCount;
         int winB = players[1].WinCount;
 
         if (winA > winB)
-        {
             Debug.Log($"Player {players[0].ClientId} の勝利！");
-            winnerName = "ラウンド取得数でホストの勝利！";
-        }
         else if (winB > winA)
-        {
             Debug.Log($"Player {players[1].ClientId} の勝利！");
-            winnerName = "ラウンド取得数でクライアントの勝利！";
-        }
         else
         {
             float sumA = players[0].ReactionTimes.Sum();
             float sumB = players[1].ReactionTimes.Sum();
 
             if (sumA < sumB)
-            {
                 Debug.Log($"Player {players[0].ClientId} がタイム合計で勝利！");
-                winnerName = "タイム合計でホストの勝利！";
-            }
             else if (sumB < sumA)
-            {
                 Debug.Log($"Player {players[1].ClientId} がタイム合計で勝利！");
-                winnerName = "タイム合計でクライアントの勝利！";
-            }
             else
-            {
                 Debug.Log("合計タイムも同じためホストの勝ち！");
-                winnerName = "タイム合計で引き分け！";
-            }
         }
-
-        
-        ShowResultPanelClientRpc(winnerName);
 
         SetGameState(GameState.GameOver); // ゲーム終了
     }
@@ -534,24 +267,20 @@ public class GameManager : NetworkBehaviour
 
 public class PlayerRoundData
 {
-    
     public ulong ClientId;
     public List<float> ReactionTimes = new();
     public int WinCount = 0;
     public int RemainingBullets = 5;
     public bool HasFinishedThisRound = false;
-    public bool WillUseSkill = false;
-
-    public SkillType SelectedSkill = SkillType.None;
 
     public PlayerRoundData(ulong clientId)
     {
         ClientId = clientId;
     }
 
-    public void ResetRound(int maxBullets)
+    public void ResetRound()
     {
-        RemainingBullets = maxBullets;
+        RemainingBullets = 5;
         HasFinishedThisRound = false;
     }
 }

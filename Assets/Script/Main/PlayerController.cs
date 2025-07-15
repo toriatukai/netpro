@@ -4,9 +4,6 @@ using Unity.Netcode;
 public class PlayerController : NetworkBehaviour
 {
     [SerializeField] private CrosshairController crosshairController;
-    [SerializeField] private GameObject crosshair; // クロスヘアのUI
-    private Vector2 defaultCrosshairSize = new Vector3(1f, 1f, 1f);
-    private Vector2 enlargedCrosshairSize = new Vector3(3f, 3f, 3f);
 
     private bool canShoot = false;
 
@@ -26,6 +23,18 @@ public class PlayerController : NetworkBehaviour
 
         if (!IsOwner) return;
 
+        if (IsServer && Input.GetKeyDown(KeyCode.Space))
+        {
+            if (GameManager.Instance.CurrentState == GameManager.GameState.Connecting)
+            {
+                GameManager.Instance.StartGame();
+            }
+        }
+        /*if(GameManager.Instance != null)
+        {
+            Debug.Log("GameManagerInstance: " + GameManager.Instance + ",  GameManager.Instance.CurrentState: " + GameManager.Instance.CurrentState);
+        }*/
+
         if (GameManager.Instance == null || GameManager.Instance.CurrentState != GameManager.GameState.Playing)
         {
             return;
@@ -34,6 +43,10 @@ public class PlayerController : NetworkBehaviour
         if (Input.GetMouseButtonDown(0) && canShoot)
         {
             TryShoot();
+        }
+        else
+        {
+            Debug.Log("canShoot: " + canShoot);
         }
     }
 
@@ -45,36 +58,31 @@ public class PlayerController : NetworkBehaviour
             return;
         }
 
+        if (crosshairController.RemainingBullets <= 0)
+        {
+            Debug.Log("弾切れ");
+            SendReactionTime(-1f);
+            canShoot = false;
+            return;
+        }
+
         bool hitTarget = crosshairController.CheckHit();
 
         crosshairController.RemainingBullets--;
-        GameUIManager.Instance.UpdateBulletsText(crosshairController.RemainingBullets);
 
-        if (crosshairController.RemainingBullets <= 0 && !crosshairController.HasAlreadyHit)
+        if (hitTarget)
         {
-            Debug.Log("撃ち切りで外した");
-            GameUIManager.Instance.SetReactionTime(-1f); // テキストの配置
-            SendReactionTime(-1f);
+            Debug.Log("Time.time: " + Time.time + ", GameManager.Instance.TargetDisplayTime: " + GameManager.Instance.TargetDisplayTime);
+            float reactionTime = Time.time - GameManager.Instance.TargetDisplayTime;
+
+            SendReactionTime(reactionTime);
             canShoot = false;
         }
         else
         {
-            Debug.Log("外した、残り弾数: " + crosshairController.RemainingBullets);
+            Debug.Log("外した");
             // 弾は減るが反応時間は送らない（撃ち切りになるまで）
         }
-    }
-
-    public void OnTargetHit(float reactionTime)
-    {
-        if (crosshairController.HasAlreadyHit) return;
-
-        crosshairController.HasAlreadyHit = true;
-        canShoot = false;
-
-        GameUIManager.Instance.SetReactionTime(reactionTime);
-
-        SendReactionTime(reactionTime);
-
     }
 
     private void SendReactionTime(float time)
@@ -93,35 +101,12 @@ public class PlayerController : NetworkBehaviour
 
     public void ResetClientRound()
     {
-        //GameUIManager.Instance.ResetReactionTime();
-        
+        Debug.Log("クライアント側のプレイヤーがラウンドをリセット");
         if (crosshairController != null)
         {
             canShoot = true;
             crosshairController.HasAlreadyHit = false;
             crosshairController.RemainingBullets = 5;
         }
-    }
-
-    public void NotifyReadyForRound()
-    {
-        if (!IsOwner) return;
-        NotifyReadyServerRpc();
-    }
-
-    [ServerRpc]
-    private void NotifyReadyServerRpc(ServerRpcParams rpcParams = default)
-    {
-        GameManager.Instance.NotifyReadyForRoundServerRpc(OwnerClientId);
-    }
-
-    public void ApplyArtillerySkill()
-    {
-        crosshair.transform.localScale = enlargedCrosshairSize;
-    }
-
-    public void ResetCrosshairSize()
-    {
-        crosshair.transform.localScale = defaultCrosshairSize;
     }
 }
