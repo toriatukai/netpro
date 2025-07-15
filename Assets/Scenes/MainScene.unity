@@ -1662,7 +1662,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetPrefab: {fileID: 6872454270630207035, guid: 0d0dcb7cca29386468048cfc3a7edba3, type: 3}
-  decoyPrefab: {fileID: 6872454270630207035, guid: 48d121f94a39ca443ad25518e148784e, type: 3}
+  decoyPrefab: {fileID: 8045807950553611857, guid: 48d121f94a39ca443ad25518e148784e, type: 3}
   widthRate: 0.8
   heightRate: 0.55
 --- !u!4 &1049111857
