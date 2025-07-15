@@ -29,14 +29,19 @@ public class CrosshairController : MonoBehaviour
 
         for (int i = 0; i < count; i++)
         {
-
             var hitCollider = hits[i];
             Debug.Log("ヒットしたオブジェクトのタグ: " + hitCollider.tag);
+        }
+
+        for (int i = 0; i < count; i++)
+        {
+
+            var hitCollider = hits[i];
 
             if (hitCollider.CompareTag("Target"))
             {
                 hitCollider.GetComponent<TargetController>().OnHit();
-                HasAlreadyHit = true;
+                //HasAlreadyHit = true;
                 return true;
             }
             else if (hitCollider.CompareTag("Decoy"))
