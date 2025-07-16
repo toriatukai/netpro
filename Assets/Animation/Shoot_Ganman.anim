@@ -6,7 +6,7 @@ AnimationClip:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Shooting
+  m_Name: Shoot_Ganman
   serializedVersion: 7
   m_Legacy: 0
   m_Compressed: 0
@@ -27,35 +27,44 @@ AnimationClip:
         inWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
         outWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
       - serializedVersion: 3
-        time: 0.083333336
-        value: {x: 0, y: 0, z: 98.034935}
-        inSlope: {x: 0, y: 0, z: 297.51102}
-        outSlope: {x: 0, y: 0, z: 297.51102}
+        time: 0.16666667
+        value: {x: 0, y: 0, z: 113.65415}
+        inSlope: {x: 0, y: 0, z: 272.55328}
+        outSlope: {x: 0, y: 0, z: 272.55328}
         tangentMode: 0
         weightedMode: 0
-        inWeight: {x: 0.33333334, y: 0.33333334, z: 0.80350846}
-        outWeight: {x: 0.33333334, y: 0.33333334, z: 1}
+        inWeight: {x: 0.33333334, y: 0.33333334, z: 0.58842987}
+        outWeight: {x: 0.33333334, y: 0.33333334, z: 0.15308839}
       - serializedVersion: 3
-        time: 0.11666667
-        value: {x: 0, y: 0, z: 148.60349}
-        inSlope: {x: 0, y: 0, z: 447.30368}
-        outSlope: {x: 0, y: 0, z: 447.30368}
+        time: 0.25
+        value: {x: 0, y: 0, z: 113.83125}
+        inSlope: {x: 0, y: 0, z: -123.81096}
+        outSlope: {x: 0, y: 0, z: -123.81096}
         tangentMode: 0
         weightedMode: 0
         inWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
-        outWeight: {x: 0.33333334, y: 0.33333334, z: 0.8289522}
-      - serializedVersion: 3
-        time: 0.2
-        value: {x: 0, y: 0, z: 129.19926}
-        inSlope: {x: 0, y: 0, z: -80.80127}
-        outSlope: {x: 0, y: 0, z: -80.80127}
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: {x: 0.33333334, y: 0.33333334, z: 0.55823404}
         outWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
       - serializedVersion: 3
-        time: 0.81666666
-        value: {x: 0, y: 0, z: 90}
+        time: 0.28333333
+        value: {x: 0, y: 0, z: 110.72226}
+        inSlope: {x: 0, y: 0, z: -39.610344}
+        outSlope: {x: 0, y: 0, z: -39.610344}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.33333334, y: 0.33333334, z: 1}
+        outWeight: {x: 0.33333334, y: 0.33333334, z: 0.32990742}
+      - serializedVersion: 3
+        time: 0.6666667
+        value: {x: 0, y: 0, z: 90.59662}
+        inSlope: {x: 0, y: 0, z: -22.90996}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.33333334, y: 0.33333334, z: 0.4760036}
+        outWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+      - serializedVersion: 3
+        time: 1
+        value: {x: 0, y: 0, z: 90.59662}
         inSlope: {x: 0, y: 0, z: 0}
         outSlope: {x: 0, y: 0, z: 0}
         tangentMode: 0
@@ -65,7 +74,7 @@ AnimationClip:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-    path: GameObject
+    path: ' joint'
   m_PositionCurves: []
   m_ScaleCurves: []
   m_FloatCurves: []
@@ -78,7 +87,7 @@ AnimationClip:
   m_ClipBindingConstant:
     genericBindings:
     - serializedVersion: 2
-      path: 1482111001
+      path: 3988336527
       attribute: 4
       script: {fileID: 0}
       typeID: 4
@@ -92,7 +101,7 @@ AnimationClip:
     m_AdditiveReferencePoseClip: {fileID: 0}
     m_AdditiveReferencePoseTime: 0
     m_StartTime: 0
-    m_StopTime: 0.81666666
+    m_StopTime: 1
     m_OrientationOffsetY: 0
     m_Level: 0
     m_CycleOffset: 0
@@ -122,7 +131,25 @@ AnimationClip:
         inWeight: 0.33333334
         outWeight: 0.33333334
       - serializedVersion: 3
-        time: 0.81666666
+        time: 0.16666667
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 0.25
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 1
         value: 0
         inSlope: 0
         outSlope: 0
@@ -134,8 +161,8 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: localEulerAnglesRaw.x
-    path: GameObject
-    classID: 4
+    path: ' joint'
+    classID: 224
     script: {fileID: 0}
     flags: 0
   - serializedVersion: 2
@@ -152,7 +179,25 @@ AnimationClip:
         inWeight: 0.33333334
         outWeight: 0.33333334
       - serializedVersion: 3
-        time: 0.81666666
+        time: 0.16666667
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 0.25
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 1
         value: 0
         inSlope: 0
         outSlope: 0
@@ -164,8 +209,8 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: localEulerAnglesRaw.y
-    path: GameObject
-    classID: 4
+    path: ' joint'
+    classID: 224
     script: {fileID: 0}
     flags: 0
   - serializedVersion: 2
@@ -182,47 +227,38 @@ AnimationClip:
         inWeight: 0.33333334
         outWeight: 0.33333334
       - serializedVersion: 3
-        time: 0.083333336
-        value: 98.034935
-        inSlope: 297.51102
-        outSlope: 297.51102
+        time: 0.16666667
+        value: 113.65415
+        inSlope: 272.55328
+        outSlope: 272.55328
         tangentMode: 0
         weightedMode: 0
-        inWeight: 0.80350846
-        outWeight: 1
+        inWeight: 0.58842987
+        outWeight: 0.15308839
       - serializedVersion: 3
-        time: 0.11666667
-        value: 148.60349
-        inSlope: 447.30368
-        outSlope: 447.30368
+        time: 0.28333333
+        value: 110.72226
+        inSlope: -39.610344
+        outSlope: -39.610344
         tangentMode: 0
         weightedMode: 0
-        inWeight: 0.33333334
-        outWeight: 0.8289522
+        inWeight: 1
+        outWeight: 0.32990742
       - serializedVersion: 3
-        time: 0.2
-        value: 129.19926
-        inSlope: -80.80127
-        outSlope: -80.80127
+        time: 0.6666667
+        value: 90.59662
+        inSlope: -22.90996
+        outSlope: -22.90996
         tangentMode: 0
         weightedMode: 0
-        inWeight: 0.55823404
-        outWeight: 0.33333334
-      - serializedVersion: 3
-        time: 0.81666666
-        value: 90
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 136
-        weightedMode: 0
-        inWeight: 0.33333334
+        inWeight: 0.4760036
         outWeight: 0.33333334
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: localEulerAnglesRaw.z
-    path: GameObject
-    classID: 4
+    path: ' joint'
+    classID: 224
     script: {fileID: 0}
     flags: 0
   m_EulerEditorCurves:
@@ -234,8 +270,8 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_LocalEulerAngles.x
-    path: GameObject
-    classID: 4
+    path: ' joint'
+    classID: 224
     script: {fileID: 0}
     flags: 0
   - serializedVersion: 2
@@ -246,8 +282,8 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_LocalEulerAngles.y
-    path: GameObject
-    classID: 4
+    path: ' joint'
+    classID: 224
     script: {fileID: 0}
     flags: 0
   - serializedVersion: 2
@@ -258,8 +294,8 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_LocalEulerAngles.z
-    path: GameObject
-    classID: 4
+    path: ' joint'
+    classID: 224
     script: {fileID: 0}
     flags: 0
   m_HasGenericRootTransform: 0

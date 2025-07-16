@@ -120,6 +120,8 @@ public class GameManager : NetworkBehaviour
             }
         }
 
+        SetGameState(GameState.Countdown);
+
         ShowCountdownTextClientRpc("3");
         await UniTask.Delay(1000);
         ShowCountdownTextClientRpc("2");
@@ -183,7 +185,7 @@ public class GameManager : NetworkBehaviour
 
         UpdateRoundClientRpc(currentRound);
 
-        SetGameState(GameState.Playing);
+        //SetGameState(GameState.Playing);
 
         SpawnTargetAsync(targetSpawnCts.Token).Forget();
     }

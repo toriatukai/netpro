@@ -196,7 +196,10 @@ public class GameUIManager : MonoBehaviour
                 skillNameText.text = "スキル: 未選択";
                 skillExplanationText.text = "スキルを選択してください。";
                 break;
+
         }
+
+        SkillVisualManager.Instance.SetSkillVisual(skill);
     }
 
     public void ShowSkillCountdown(string text)
