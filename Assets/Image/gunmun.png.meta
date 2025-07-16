@@ -384,7 +384,18 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      gunmun_0: -2214414902696356942
+      gunmun_1: 8430617185720748073
+      gunmun_10: -6078005674169000285
+      gunmun_2: 3446061637556943143
+      gunmun_3: -2381735135515990225
+      gunmun_4: -1221425090346586617
+      gunmun_5: 9068591183619897493
+      gunmun_6: -7550162674528047992
+      gunmun_7: -2334947135263255283
+      gunmun_8: -2250786892868101282
+      gunmun_9: -8559654243868583977
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
