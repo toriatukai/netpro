@@ -12,6 +12,8 @@ public class PlayerController : NetworkBehaviour
 
     private bool canShoot = false;
 
+    private bool isSkilluse = false;
+
     private GameManager.GameState lastState = GameManager.GameState.Connecting;
 
 
@@ -50,7 +52,13 @@ public class PlayerController : NetworkBehaviour
 
     private void TryShoot()
     {
-        SkillVisualManager.Instance.PlayShootAnimation();
+        if (IsOwner)
+        {
+            var mySkill = SkillRetention.Instance.GetSkillForClient(OwnerClientId);
+            bool isArtillery = mySkill == SkillType.Artillery;
+
+            SkillVisualManager.Instance.PlayShootAnimation(isArtillery, isSkilluse);
+        }
 
         if (crosshairController.HasAlreadyHit)
         {
@@ -138,10 +146,12 @@ public class PlayerController : NetworkBehaviour
     public void ApplyArtillerySkill()
     {
         crosshair.transform.localScale = enlargedCrosshairSize;
+        isSkilluse = true;
     }
 
     public void ResetCrosshairSize()
     {
         crosshair.transform.localScale = defaultCrosshairSize;
+        isSkilluse = false;
     }
 }

@@ -47,11 +47,18 @@ public class SkillVisualManager : MonoBehaviour
         }
     }
 
-    public void PlayShootAnimation()
+    public void PlayShootAnimation(bool isArtillery, bool isSkillUse)
     {
-        if (currentAnimator != null)
+        if (currentAnimator == null) return;
+
+        // スキルが砲兵で、スキルが有効な場合は別のアニメーション
+        if (isArtillery && isSkillUse)
         {
-            currentAnimator.Play("Shoot", -1, 0f);
+            currentAnimator.Play("Shoot_Artillery", -1, 0f);
+        }
+        else
+        {
+            currentAnimator.Play("Shoot", -1, 0f); // 通常の射撃アニメーション
         }
     }
 }

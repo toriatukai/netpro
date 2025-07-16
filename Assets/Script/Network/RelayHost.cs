@@ -70,6 +70,7 @@ public class RelayHost : MonoBehaviour
         if (NetworkManager.Singleton.ConnectedClientsList.Count >= requiredPlayers &&
             NetworkManager.Singleton.IsHost && !sceneLoaded)
         {
+            Debug.Log("”ò‚Ñ‚Ü‚·3");
             sceneLoaded = true;
 
             //SceneController‚ğŒÄ‚Ño‚µ‚Ä‘JˆÚ

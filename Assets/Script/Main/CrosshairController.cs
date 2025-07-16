@@ -41,7 +41,6 @@ public class CrosshairController : MonoBehaviour
             if (hitCollider.CompareTag("Target"))
             {
                 hitCollider.GetComponent<TargetController>().OnHit();
-                //HasAlreadyHit = true;
                 return true;
             }
             else if (hitCollider.CompareTag("Decoy"))
