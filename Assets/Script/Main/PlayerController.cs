@@ -5,10 +5,14 @@ public class PlayerController : NetworkBehaviour
 {
     [SerializeField] private CrosshairController crosshairController;
     [SerializeField] private GameObject crosshair; // クロスヘアのUI
+    [SerializeField] private Animator animator;
+
     private Vector2 defaultCrosshairSize = new Vector3(1f, 1f, 1f);
     private Vector2 enlargedCrosshairSize = new Vector3(3f, 3f, 3f);
 
     private bool canShoot = false;
+
+    private GameManager.GameState lastState = GameManager.GameState.Connecting;
 
 
     public override void OnNetworkSpawn()
@@ -18,6 +22,7 @@ public class PlayerController : NetworkBehaviour
             canShoot = true;
             LocalInstance = this;
         }
+        crosshair.SetActive(false);
     }
 
     private void Update()
@@ -25,11 +30,17 @@ public class PlayerController : NetworkBehaviour
         crosshairController.MouseFollow();
 
         if (!IsOwner) return;
+        if (GameManager.Instance == null) return;
 
-        if (GameManager.Instance == null || GameManager.Instance.CurrentState != GameManager.GameState.Playing)
+        var currentState = GameManager.Instance.CurrentState;
+        // 状態変化時のみ表示・非表示を切り替える
+        if (currentState != lastState )
         {
-            return;
+            lastState = currentState;
+            HandleCrosshairVisibility(currentState);
         }
+
+        if (GameManager.Instance.CurrentState != GameManager.GameState.Playing) return;
 
         if (Input.GetMouseButtonDown(0) && canShoot)
         {
@@ -39,6 +50,8 @@ public class PlayerController : NetworkBehaviour
 
     private void TryShoot()
     {
+        SkillVisualManager.Instance.PlayShootAnimation();
+
         if (crosshairController.HasAlreadyHit)
         {
             Debug.Log("もう命中済み");
@@ -101,6 +114,13 @@ public class PlayerController : NetworkBehaviour
             crosshairController.HasAlreadyHit = false;
             crosshairController.RemainingBullets = 5;
         }
+    }
+
+    private void HandleCrosshairVisibility(GameManager.GameState state)
+    {
+        bool shouldShow = state == GameManager.GameState.Playing || state == GameManager.GameState.Countdown;
+        Debug.Log(shouldShow);
+        crosshair.SetActive(shouldShow); // Crosshairオブジェクトの表示を切り替える
     }
 
     public void NotifyReadyForRound()
