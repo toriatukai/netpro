@@ -259,7 +259,13 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      artillery_0: 8504586952923414236
+      artillery_1: 6387241491453947873
+      artillery_2: -3931678617420728912
+      artillery_3: 7542439956766619587
+      artillery_4: -6718811613236315496
+      artillery_5: -6375486465672374328
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

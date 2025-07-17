@@ -209,7 +209,11 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      weapons_0: 1098179606456428539
+      weapons_1: -5557420877203330147
+      weapons_2: -7888296697152109952
+      weapons_3: 698664279297640794
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
