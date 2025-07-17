@@ -9,10 +9,6 @@ public class RelayHost : MonoBehaviour
 {
     public TMP_InputField joinCodeOutputField;
 
-    //タイトル画面で使う用の追加部分 以下2行
-    private int requiredPlayers = 2;     //ホスト + 1人
-    private bool sceneLoaded = false;   //二重遷移防止
-
     //Relayサーバーを使ってホストとして接続するメソッド
     public async void StartRelayHost()
     {
@@ -43,46 +39,5 @@ public class RelayHost : MonoBehaviour
 
         //ホストとして起動
         NetworkManager.Singleton.StartHost();
-    }
-
-    //タイトル画面で使う用の追加部分
-
-    void OnEnable()
-    {
-        if (NetworkManager.Singleton != null)
-        {
-            NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
-        }   
-    }
-
-    void OnDisable()
-    {
-        if (NetworkManager.Singleton != null)
-        {
-            NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
-        }
-    }
-    private void OnClientConnected(ulong clientId)
-    {
-        Debug.Log($"Client connected: {clientId}");
-
-        //ホスト含めて requiredPlayers　に到達したらシーン遷移
-        if (NetworkManager.Singleton.ConnectedClientsList.Count >= requiredPlayers &&
-            NetworkManager.Singleton.IsHost && !sceneLoaded)
-        {
-            Debug.Log("飛びます3");
-            sceneLoaded = true;
-
-            //SceneControllerを呼び出して遷移
-            SceneController controller = FindFirstObjectByType<SceneController>();
-            if (controller != null)
-            {
-                controller.LoadCharactarSelectScene();
-            }
-            else
-            {
-                Debug.LogError("SceneController がシーン内に存在しません");
-            }
-        }
     }
 }
