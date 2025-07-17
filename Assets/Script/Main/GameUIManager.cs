@@ -67,16 +67,16 @@ public class GameUIManager : MonoBehaviour
         HideResultPanel();
         ShowBeforeRoundPanel();
 
-        SetSkill(currentSkill);
+        if (PlayerController.LocalInstance != null)
+        {
+            ulong clientId = Unity.Netcode.NetworkManager.Singleton.LocalClientId;
+            var selectedSkill = SkillRetention.Instance.GetSkillForClient(clientId);
+            GameManager.Instance.SetSelectedSkillServerRpc(Unity.Netcode.NetworkManager.Singleton.LocalClientId, selectedSkill, false);
+
+            SetSkill(selectedSkill); // UI表示用に反映
+        }
     }
 
-    private void Update()
-    {
-        // デバッグ用キー操作でスキル変更
-        if (Input.GetKeyDown(KeyCode.Alpha1)) SetSkill(SkillType.Gunman);
-        if (Input.GetKeyDown(KeyCode.Alpha2)) SetSkill(SkillType.Artillery);
-        if (Input.GetKeyDown(KeyCode.Alpha3)) SetSkill(SkillType.Engineer);
-    }
     private void OnStartButtonClicked()
     {
         // プレイヤーのローカルコントローラーから通知を呼ぶ（以下で説明）
@@ -139,7 +139,7 @@ public class GameUIManager : MonoBehaviour
     {
         if (time < 0f)
         {
-            reactionTimeText.text = "Time: emptyAmmo";
+            reactionTimeText.text = "Time: emptyammo";
         }
         else
         {
@@ -156,8 +156,8 @@ public class GameUIManager : MonoBehaviour
     {
         if (roundIndex < 0 || roundIndex >= roundResultText.Length) return;
 
-        string hostStr = hostTime >= 0 ? hostTime.ToString("00.00") : "emptyAmmo";
-        string clientStr = clientTime >= 0 ? clientTime.ToString("00.00") : "emptyAmmo";
+        string hostStr = hostTime >= 0 ? hostTime.ToString("00.00") : "emptyammo";
+        string clientStr = clientTime >= 0 ? clientTime.ToString("00.00") : "emptyammo";
 
         roundResultText[roundIndex].text = $"{hostStr}sec vs {clientStr}sec";
     }
